@@ -1,4 +1,4 @@
-function CheckImagesRealData()
+function CompareFrameToFrame()
     DEBUG = 0;
 
     %Set root dirs from compensated and uncompensated image stacks
@@ -30,31 +30,11 @@ function CheckImagesRealData()
                 compensatedScan2 = loadAsrlMatArchive([compDir compFilePath.name '/0001/' compedImageStacks(i+1).name]);
                 distortedScan1  = loadAsrlMatArchive([distortedDir distortedFilePath.name '/0001/' distortedImageStacks(i).name]);
                 distortedScan2  = loadAsrlMatArchive([distortedDir distortedFilePath.name '/0001/' distortedImageStacks(i+1).name]);
-
                 
-%                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                 %%%%% Common Image Parts %%%%%%%
-%                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                 %Compute commmon image parts from motion                                      
-%                 movementInPixels = round((size(compensatedScan1.intense8Img,2)/fov(1)) * vpChange);
-%                 commonImgPart1.intense8Img = compensatedScan1.intense8Img(:,1:((size(compensatedScan1.intense8Img,2)+1) - movementInPixels));
-%                 commonImgPart2.intense8Img = compensatedScan2.intense8Img(:,movementInPixels:size(compensatedScan1.intense8Img,2));
-%                 commonImgPart1.maskImg = compensatedScan1.maskImg(:,1:((size(compensatedScan1.intense8Img,2)+1) - movementInPixels));
-%                 commonImgPart2.maskImg = compensatedScan2.maskImg(:,movementInPixels:size(compensatedScan1.intense8Img,2));
-% 
-%                 %Crop blackness due to compensation
-%                 commonImgPart1.intense8Img = commonImgPart1.intense8Img(:,sum(commonImgPart1.maskImg) == size(commonImgPart1.maskImg,1))
-%                 commonImgPart2.intense8Img = commonImgPart2.intense8Img(:,sum(commonImgPart2.maskImg) == size(commonImgPart2.maskImg,1))
-%                 commonImgPart1.maskImg = commonImgPart1.maskImg(:,sum(commonImgPart1.maskImg) == size(commonImgPart1.maskImg,1))
-%                 commonImgPart2.maskImg = commonImgPart2.maskImg(:,sum(commonImgPart2.maskImg) == size(commonImgPart2.maskImg,1))
-% 
-%                 %Check if the images are of equal size, if not, make
-%                 %them equal
-%                 newSize = min(size(commonImgPart1.intense8Img,2),size(commonImgPart2.intense8Img,2))
-%                 commonImgPart1.intense8Img = commonImgPart1.intense8Img(:,1:newSize);
-%                 commonImgPart2.intense8Img = commonImgPart2.intense8Img(:,1:newSize);
+                if(DEBUG)
+                    close all;
+                end
                 
-                close all;
                 fileNamePostFix = sprintf('real-lowthres-compensated-%d',i);
                 compensatedScan1.intense8Img = compensatedScan1.intense8Img  / 256;
                 compensatedScan2.intense8Img = compensatedScan2.intense8Img  / 256;
@@ -70,12 +50,14 @@ function CheckImagesRealData()
                 distortSum = distortSum + distortedNormMatchingScore(dirIndex,i); 
             end
             
-            figure(1); clf; hold on;
-            plot(distortedNormMatchingScore(dirIndex,:),'r'); 
-            plot(compNormMatchingScore(dirIndex,:),'b'); 
-            hold off;
-            
-            sum(distortedNormMatchingScore(dirIndex,:)), sum(compNormMatchingScore(dirIndex,:))
+            if(DEBUG)
+                figure(1); clf; hold on;
+                plot(distortedNormMatchingScore(dirIndex,:),'r'); 
+                plot(compNormMatchingScore(dirIndex,:),'b'); 
+                hold off;
+
+                sum(distortedNormMatchingScore(dirIndex,:)), sum(compNormMatchingScore(dirIndex,:))
+            end
         end
 
         distortedFilePath.name
@@ -96,8 +78,4 @@ function CheckImagesRealData()
     xlabel('Rotational velocity');
     ylabel('Average normalized matching score');  
     legend('Features matching on comp. images','Features matching on uncomp. images');
-    
-    %Average track length
-    %sum(compTrackLength(2,~isnan(compTrackLength(2,:)))) / sum(~isnan(compTrackLength(2,:)))
-    %sum(distortTrackLength(2,~isnan(distortTrackLength(2,:)))) / sum(~isnan(distortTrackLength(2,:)))
 end
