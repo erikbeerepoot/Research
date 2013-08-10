@@ -1,19 +1,31 @@
+%       ___           ___           ___           ___ 
+%      /\  \         /\  \         /\  \         /\__\
+%     /::\  \       /::\  \       /::\  \       /:/  /
+%    /:/\:\  \     /:/\ \  \     /:/\:\  \     /:/  / 
+%   /::\~\:\  \   _\:\~\ \  \   /::\~\:\  \   /:/  /  
+%  /:/\:\ \:\__\ /\ \:\ \ \__\ /:/\:\ \:\__\ /:/__/   
+%  \/__\:\/:/  / \:\ \:\ \/__/ \/_|::\/:/  / \:\  \   
+%       \::/  /   \:\ \:\__\      |:|::/  /   \:\  \  
+%       /:/  /     \:\/:/  /      |:|\/__/     \:\  \ 
+%      /:/  /       \::/  /       |:|  |        \:\__\
+%      \/__/         \/__/         \|__|         \/__/
+%   |------------Autonomous Space Robotics Lab -------|
+%   /name   CompareFrameToFrame
+%   /brief  Compares image stacks by comparing sequential frames
+%
 function CompareFrameToFrame()
     DEBUG = 0;
 
     %Set root dirs from compensated and uncompensated image stacks
     compDir = '/mnt/data/Datasets/Features/RANSAC-Comp/ImageStacks/';
     distortedDir = '/mnt/data/Datasets/Features/02-Feb-13/ImageStacks/';
- 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Match each frame to the next %
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    %Get dirs
+    %Get directories containing image stacks
     distortedDirs = dir([distortedDir 'smooth*']);
     compDirs = dir([compDir 'smooth*']);
        
-    for dirIndex = 2 : size(distortedDirs,1)
+    %Loop over each directory and process file
+    for dirIndex = 1 : size(distortedDirs,1)
         distortedFilePath = distortedDirs (dirIndex);
         compFilePath = compDirs(dirIndex);
         
@@ -71,6 +83,11 @@ function CompareFrameToFrame()
         string = sprintf('Average normalized matching score for distorted images: %f',uncompScore(dirIndex));
         disp(string);
     end
+    
+    
+    %%%%%%%%%%%%%%%%
+    % Plot results %
+    %%%%%%%%%%%%%%%%
     
     figure(1); clf; hold on;
     plot(compScore,'b','LineWidth',2);

@@ -1,3 +1,19 @@
+%       ___           ___           ___           ___ 
+%      /\  \         /\  \         /\  \         /\__\
+%     /::\  \       /::\  \       /::\  \       /:/  /
+%    /:/\:\  \     /:/\ \  \     /:/\:\  \     /:/  / 
+%   /::\~\:\  \   _\:\~\ \  \   /::\~\:\  \   /:/  /  
+%  /:/\:\ \:\__\ /\ \:\ \ \__\ /:/\:\ \:\__\ /:/__/   
+%  \/__\:\/:/  / \:\ \:\ \/__/ \/_|::\/:/  / \:\  \   
+%       \::/  /   \:\ \:\__\      |:|::/  /   \:\  \  
+%       /:/  /     \:\/:/  /      |:|\/__/     \:\  \ 
+%      /:/  /       \::/  /       |:|  |        \:\__\
+%      \/__/         \/__/         \|__|         \/__/
+%   |------------Autonomous Space Robotics Lab -------|
+%   /name   CompareImagesByDescriptor
+%   /brief  Compares images im1 and im2 by attempting to match SURF
+%           features between the frames.
+
 function [score,avgTrackLength] = CompareImagesByDescriptor(im1,im2,doPlot,doSave,fileNamePostFix)
     kDistanceThreshold = 100;
     kDescThreshold = 0.025;
