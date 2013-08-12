@@ -14,6 +14,7 @@
 %   /brief  Compares each frame from a particular trial to a frame from a
 %           reference set of image stacks.
 function [out_frameTransforms] = FindFrameTransforms(in_imagestackDir,in_T,in_t)
+    DEBUG = 0;
     kNumDataPoints = 5 
     kMoveThreshold = 0.05 % meters
     
@@ -25,11 +26,11 @@ function [out_frameTransforms] = FindFrameTransforms(in_imagestackDir,in_T,in_t)
         meanTranslation = mean(in_T(1:4,4,transformIndex:transformIndex+kNumDataPoints),3);
         
         if(sum(abs(meanTranslation - startPosition)) > kMoveThreshold)
-            refViconOffset = transformIndex;
+            refViconOffset = transformIndex + 100;
             break;
         end
     end
-
+        
     % Get image stacks in the reference directory
     files = dir([in_imagestackDir '*.asa'])    
     
@@ -50,4 +51,18 @@ function [out_frameTransforms] = FindFrameTransforms(in_imagestackDir,in_T,in_t)
         
         frameIndex = frameIndex + 1;
     end
+    
+    if(DEBUG)
+        figure; clf;
+        hold on; axis equal; grid on;
+        xlabel('x'); ylabel('y'); zlabel('z')
+        plotCoordinateFrame(rph2c([pi/2,-pi/2,pi]),[0,0,0]')
+
+        %Plot each frame
+        for i = 1:size(T_ref_out,3)
+            T_t = T_ref_out(:,:,i);
+            plotCoordinateFrame(T_t(1:3,1:3),T_t(1:3,4),2); 
+        end
+    end
+    
 end

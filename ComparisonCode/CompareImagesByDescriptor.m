@@ -30,15 +30,6 @@ function [score,avgTrackLength] = CompareImagesByDescriptor(im1,im2,doPlot,doSav
         return;
     end
     
-    if(doPlot==1)
-        %Display images    
-        figure; clf;
-        imshow(im1);
-
-        figure; clf;
-        imshow(im2);
-    end
-    
     %Compute pixel differences
     mask = zeros([size(im1),3]);
     for row = 1 : size(im1,1)
