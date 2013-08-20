@@ -33,12 +33,12 @@ function CompareFrameToReferenceFrame()
     autoComputeViewpoint = 0;
     
     %Set root dirs from compensated and uncompensated image stacks
-    compRootDir = '/mnt/data/Datasets/Features/Compensated/';
+    compRootDir = '/mnt/data/Datasets/Features/Compensated/02-Feb-13/';
     distortedRootDir = '/mnt/data/Datasets/Features/02-Feb-13/';
     
     %Set dirs from which to load imagestacks
     %referenceDir = '/mnt/data/Datasets/Features/02-Feb-13/ImageStacks/smoothturning-0.0-0.25-13:06/0001/';
-    referenceDir = '/mnt/data/Datasets/Features/Compensated/ImageStacks/smoothturning-0.0-0.25-13:06/0001/';
+    referenceDir = '/mnt/data/Datasets/Features/Compensated/02-Feb-13/ImageStacks/smoothturning-0.0-0.25-13:06/0001/';
     compDir = [compRootDir 'ImageStacks/']
     distortedDir = [distortedRootDir 'ImageStacks/']
     
@@ -91,8 +91,8 @@ function CompareFrameToReferenceFrame()
                 
                 if(autoComputeViewpoint)
                     %Get matching frame from reference series (auto)
-                    %T = T_compframes_out(:,:,frameIndex);
-                    %idx = FindReferenceFrame(T_ref_out,T);
+                    T = T_compframes_out(:,:,frameIndex);
+                    idx = FindReferenceFrame(T_ref_out,T);
                 else  
                     idx = referenceIndexes(dirIndex,frameIndex)
                 end
@@ -100,9 +100,21 @@ function CompareFrameToReferenceFrame()
                 %Get reference image
                 referenceFrame = loadAsrlMatArchive([referenceDir referenceImageStacks(idx).name]);
                 close all;
-                [compScore(dirIndex,frameIndex) compTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'');
-                [distortScore(dirIndex,frameIndex) distortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'');
-                pause(1);
+                %[surfCompScore(dirIndex,frameIndex) compTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'SURF');
+                %[surfDistortScore(dirIndex,frameIndex) distortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'SURF');
+                
+                %[FASTcompScore(dirIndex,frameIndex) FASTcompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'FAST');
+                %[FASTdistortScore(dirIndex,frameIndex) FASTdistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'FAST');
+                
+                %[HarrisCompScore(dirIndex,frameIndex) HarrisCompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'Harris');
+                %[HarrisDistortScore(dirIndex,frameIndex) HarrisDistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'Harris');
+                
+                
+                %[HarrisAffCompScore(dirIndex,frameIndex) HarrisAffCompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'HarrisAffine');
+                %[HarrisAffDistortScore(dirIndex,frameIndex) HarrisAffDistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'HarrisAffine');
+                
+                [MSERCompScore(dirIndex,frameIndex) MSERCompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'MSER');
+                [MSERDistortScore(dirIndex,frameIndex) MSERDistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'MSER');
                 
                 %Compare comped and uncomped scans
                 if(DEBUG && autoComputeViewpoint)
@@ -135,8 +147,8 @@ function CompareFrameToReferenceFrame()
     
     
     %Compute mean matching scores
-    meanCompScore = (sum(compScore') ./ sum(compScore'>0));
-    meanDistortScore = (sum(distortScore') ./ sum(distortScore'>0));
+    meanCompScore = (sum(surfCompScore') ./ sum(surfCompScore'>0));
+    meanDistortScore = (sum(surfDistortScore') ./ sum(distortsurfDistortScoreScore'>0));
         
     processedCompScore = [meanCompScore(1:3),meanCompScore(4),meanCompScore(6),meanCompScore(7),0.5*(meanCompScore(8)+meanCompScore(9)),meanCompScore(10)]
     processedDistortScore = [meanDistortScore(1:3),meanDistortScore(4),meanDistortScore(6),meanDistortScore(7),0.5*(meanDistortScore(8)+meanDistortScore(9)),meanDistortScore(10)]
