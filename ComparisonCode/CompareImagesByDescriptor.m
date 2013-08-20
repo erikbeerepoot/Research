@@ -125,7 +125,7 @@ function [score,avgTrackLength] = CompareByHarrisFeatures(im1,im2,doPlot,doSave)
 end
 
 function [score,avgTrackLength] = CompareByHarrisAffineFeatures(im1,im2,doPlot,doSave)
-    detectorPath = '/mnt/data/Dropbox/Research/Software/FeatureDetectorComparison/Harris';
+    detectorPath = '../contrib/';
     addpath(detectorPath);
     
     %Write intermediate data to temporary storage location
