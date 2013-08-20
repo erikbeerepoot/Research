@@ -110,8 +110,8 @@ function CompareFrameToReferenceFrame()
                 %[HarrisDistortScore(dirIndex,frameIndex) HarrisDistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'Harris');
                 
                 
-                %[HarrisAffCompScore(dirIndex,frameIndex) HarrisAffCompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'HarrisAffine');
-                %[HarrisAffDistortScore(dirIndex,frameIndex) HarrisAffDistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'HarrisAffine');
+                [HarrisAffCompScore(dirIndex,frameIndex) HarrisAffCompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'HarrisAffine');
+                [HarrisAffDistortScore(dirIndex,frameIndex) HarrisAffDistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'HarrisAffine');
                 
                 [MSERCompScore(dirIndex,frameIndex) MSERCompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'MSER');
                 [MSERDistortScore(dirIndex,frameIndex) MSERDistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'MSER');

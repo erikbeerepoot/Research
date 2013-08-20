@@ -31,7 +31,7 @@ function [score,avgTrackLength] = CompareImagesByDescriptor(im1,im2,doPlot,doSav
         case 'Harris'
             [score,avgTrackLength] = CompareByHarrisFeatures(im1,im2,doPlot,doSave);
         case 'HarrisAffine'
-            [score,avgTrackLength] = CompareByHarrisAffineFeatures(im1,im2,doPlot,doSave,fileNamostFix);
+            [score,avgTrackLength] = CompareByHarrisAffineFeatures(im1,im2,doPlot,doSave);
         case 'MSER'
             [score,avgTrackLength] = CompareByMSERRegions(im1,im2,doPlot,doSave);
         otherwise   
