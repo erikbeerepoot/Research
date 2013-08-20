@@ -125,8 +125,16 @@ function [score,avgTrackLength] = CompareByHarrisFeatures(im1,im2,doPlot,doSave)
 end
 
 function [score,avgTrackLength] = CompareByHarrisAffineFeatures(im1,im2,doPlot,doSave)
-    detectorPath = '../contrib/';
-    addpath(detectorPath);
+    detectorRelativePath = '/../contrib/';
+    detectorPath = [fileparts(mfilename('fullpath')) detectorRelativePath];
+
+     %Assign default output values
+    score = 0;
+    avgTrackLength = 0;
+    
+    %Run AHE
+    im1 = adapthisteq(im1);
+    im2 = adapthisteq(im2);
     
     %Write intermediate data to temporary storage location
     imwrite(im1, '/tmp/im1.ppm','ppm');
@@ -134,11 +142,16 @@ function [score,avgTrackLength] = CompareByHarrisAffineFeatures(im1,im2,doPlot,d
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%% Harris-Affine %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
     [s,w] = unix([[detectorPath '/h_affine.ln'] ' -haraff -i /tmp/im1.ppm -o /tmp/im1.haraff threshold=1000']);
-    [harrAffFeat1 nb(2,dirIndex,index) dim]=loadFeatures('/tmp/im1.haraff');
+    [harrAffFeat1 nb1 dim1]=loadFeatures('/tmp/im1.haraff');
             
     [s,w] = unix([[detectorPath '/h_affine.ln'] ' -haraff -i /tmp/im2.ppm -o /tmp/im2.haraff threshold=1000']);
-    [harrAffFeat2 nb(2,dirIndex,index) dim]=loadFeatures('/tmp/im2.haraff');
+    [harrAffFeat2 nb2 dim2]=loadFeatures('/tmp/im2.haraff');
 
+    feat1 = SURFPoints;
+    feat1 = feat1.append(harrAffFeat1(1:2,:)','Scale',2);
+    feat2 = SURFPoints;
+    feat2 = feat2.append(harrAffFeat2(1:2,:)','Scale',2);
+    
     [score,avgTrackLength] = CompareSURFDescriptors(im1,im2,feat1,feat2,doPlot,doSave);
 end
 

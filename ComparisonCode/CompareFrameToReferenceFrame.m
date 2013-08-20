@@ -100,15 +100,17 @@ function CompareFrameToReferenceFrame()
                 %Get reference image
                 referenceFrame = loadAsrlMatArchive([referenceDir referenceImageStacks(idx).name]);
                 close all;
-                %[surfCompScore(dirIndex,frameIndex) compTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'SURF');
-                %[surfDistortScore(dirIndex,frameIndex) distortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'SURF');
                 
-                %[FASTcompScore(dirIndex,frameIndex) FASTcompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'FAST');
-                %[FASTdistortScore(dirIndex,frameIndex) FASTdistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'FAST');
+                %Run comparison for different detectors with the same
+                %descriptor (SURF)
+                [surfCompScore(dirIndex,frameIndex) compTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'SURF');
+                [surfDistortScore(dirIndex,frameIndex) distortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'SURF');
                 
-                %[HarrisCompScore(dirIndex,frameIndex) HarrisCompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'Harris');
-                %[HarrisDistortScore(dirIndex,frameIndex) HarrisDistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'Harris');
+                [FASTcompScore(dirIndex,frameIndex) FASTcompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'FAST');
+                [FASTdistortScore(dirIndex,frameIndex) FASTdistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'FAST');
                 
+                [HarrisCompScore(dirIndex,frameIndex) HarrisCompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'Harris');
+                [HarrisDistortScore(dirIndex,frameIndex) HarrisDistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'Harris');
                 
                 [HarrisAffCompScore(dirIndex,frameIndex) HarrisAffCompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'HarrisAffine');
                 [HarrisAffDistortScore(dirIndex,frameIndex) HarrisAffDistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'HarrisAffine');
@@ -144,28 +146,86 @@ function CompareFrameToReferenceFrame()
     end
     
     
-    
-    
+    %%%%%%%%%%%%%%%%% SURF %%%%%%%%%%%%%%%%%%%
     %Compute mean matching scores
     meanCompScore = (sum(surfCompScore') ./ sum(surfCompScore'>0));
-    meanDistortScore = (sum(surfDistortScore') ./ sum(distortsurfDistortScoreScore'>0));
+    meanDistortScore = (sum(surfDistortScore') ./ sum(surfDistortScore'>0));
         
-    processedCompScore = [meanCompScore(1:3),meanCompScore(4),meanCompScore(6),meanCompScore(7),0.5*(meanCompScore(8)+meanCompScore(9)),meanCompScore(10)]
-    processedDistortScore = [meanDistortScore(1:3),meanDistortScore(4),meanDistortScore(6),meanDistortScore(7),0.5*(meanDistortScore(8)+meanDistortScore(9)),meanDistortScore(10)]
-    rotSpeed = [v(1:3),v(5),v(6),v(7),0.5*(v(8)+v(9)),v(10)]
+    processedCompScore = [meanCompScore(1), mean([meanCompScore(2) meanCompScore(3)]), mean([meanCompScore(4) meanCompScore(5)]), meanCompScore(6),meanCompScore(7), mean([meanCompScore(8),meanCompScore(9)]),meanCompScore(10)]
+    processedDistortScore = [meanDistortScore(1), mean([meanDistortScore(2),meanDistortScore(3)]), mean([meanDistortScore(4),meanDistortScore(5)]), meanDistortScore(6),meanDistortScore(7), mean([meanDistortScore(8),meanDistortScore(9)]),meanDistortScore(10)]
+    rotSpeed = [v(1),mean([v(2),v(3)]),mean([v(4),v(5)]),v(6),v(7),mean([v(8),v(9)]),v(10)]
     
+    %Plot results
     figure(1); clf; hold on;
     plot(abs(rotSpeed),processedCompScore,'b');
     plot(abs(rotSpeed),processedDistortScore,'r')
     legend('Compensated score','Distorted score');
     xlabel('Rotational speed');
     ylabel('Normalized matching score');
+    
+    %%%%%%%%%%%%%%%%% FAST %%%%%%%%%%%%%%%%%%%
+    meanCompScore = (sum(FASTcompScore') ./ sum(FASTcompScore'>0));
+    meanDistortScore = (sum(FASTdistortScore') ./ sum(FASTdistortScore'>0));
         
+ 
+    processedCompScore = [meanCompScore(1), mean([meanCompScore(2) meanCompScore(3)]), mean([meanCompScore(4) meanCompScore(5)]), meanCompScore(6),meanCompScore(7), mean([meanCompScore(8),meanCompScore(9)]),meanCompScore(10)]
+    processedDistortScore = [meanDistortScore(1), mean([meanDistortScore(2),meanDistortScore(3)]), mean([meanDistortScore(4),meanDistortScore(5)]), meanDistortScore(6),meanDistortScore(7), mean([meanDistortScore(8),meanDistortScore(9)]),meanDistortScore(10)]
+    rotSpeed = [v(1),mean([v(2),v(3)]),mean([v(4),v(5)]),v(6),v(7),mean([v(8),v(9)]),v(10)]
+    
+    
     %Plot results
     figure(2); clf; hold on;
-    plot(meanCompScore,'b');
-    plot(meanDistortScore,'r')
+    plot(abs(rotSpeed),processedCompScore,'b');
+    plot(abs(rotSpeed),processedDistortScore,'r')
     legend('Compensated score','Distorted score');
     xlabel('Rotational speed');
     ylabel('Normalized matching score');
+    
+    %%%%%%%%%%%%%%%%% Harris %%%%%%%%%%%%%%%%%%% 
+    meanCompScore = (sum(HarrisCompScore') ./ sum(HarrisCompScore'>0));
+    meanDistortScore = (sum(HarrisDistortScore') ./ sum(HarrisDistortScore'>0));
+        
+   
+    processedCompScore = [meanCompScore(1), mean([meanCompScore(2) meanCompScore(3)]), mean([meanCompScore(4) meanCompScore(5)]), meanCompScore(6),meanCompScore(7), mean([meanCompScore(8),meanCompScore(9)]),meanCompScore(10)]
+    processedDistortScore = [meanDistortScore(1), mean([meanDistortScore(2),meanDistortScore(3)]), mean([meanDistortScore(4),meanDistortScore(5)]), meanDistortScore(6),meanDistortScore(7), mean([meanDistortScore(8),meanDistortScore(9)]),meanDistortScore(10)]
+    rotSpeed = [v(1),mean([v(2),v(3)]),mean([v(4),v(5)]),v(6),v(7),mean([v(8),v(9)]),v(10)]
+    
+    figure(3); clf; hold on;
+    plot(abs(rotSpeed),processedCompScore,'b');
+    plot(abs(rotSpeed),processedDistortScore,'r')
+    legend('Compensated score','Distorted score');
+    xlabel('Rotational speed');
+    ylabel('Normalized matching score');
+    
+    %%%%%%%%%%%%%%%%% HarrisAffine %%%%%%%%%%%%%%%%%%% 
+    meanCompScore = (sum(HarrisAffCompScore') ./ sum(HarrisAffCompScore'>0));
+    meanDistortScore = (sum(HarrisAffDistortScore') ./ sum(HarrisAffDistortScore'>0));
+   
+    processedCompScore = [meanCompScore(1), mean([meanCompScore(2) meanCompScore(3)]), mean([meanCompScore(4) meanCompScore(5)]), meanCompScore(6),meanCompScore(7), mean([meanCompScore(8),meanCompScore(9)]),meanCompScore(10)]
+    processedDistortScore = [meanDistortScore(1), mean([meanDistortScore(2),meanDistortScore(3)]), mean([meanDistortScore(4),meanDistortScore(5)]), meanDistortScore(6),meanDistortScore(7), mean([meanDistortScore(8),meanDistortScore(9)]),meanDistortScore(10)]
+    rotSpeed = [v(1),mean([v(2),v(3)]),mean([v(4),v(5)]),v(6),v(7),mean([v(8),v(9)]),v(10)]
+    
+    figure(4); clf; hold on;
+    plot(abs(rotSpeed),processedCompScore,'b');
+    plot(abs(rotSpeed),processedDistortScore,'r')
+    legend('Compensated score','Distorted score');
+    xlabel('Rotational speed');
+    ylabel('Normalized matching score');
+        
+    %%%%%%%%%%%%%%%%% MSER %%%%%%%%%%%%%%%%%%%
+    
+    meanCompScore = (sum(MSERCompScore') ./ sum(MSERCompScore'>0));
+    meanDistortScore = (sum(MSERDistortScore') ./ sum(MSERDistortScore'>0));
+    
+    processedCompScore = [meanCompScore(1), mean([meanCompScore(2) meanCompScore(3)]), mean([meanCompScore(4) meanCompScore(5)]), meanCompScore(6),meanCompScore(7), mean([meanCompScore(8),meanCompScore(9)]),meanCompScore(10)]
+    processedDistortScore = [meanDistortScore(1), mean([meanDistortScore(2),meanDistortScore(3)]), mean([meanDistortScore(4),meanDistortScore(5)]), meanDistortScore(6),meanDistortScore(7), mean([meanDistortScore(8),meanDistortScore(9)]),meanDistortScore(10)]
+    rotSpeed = [v(1),mean([v(2),v(3)]),mean([v(4),v(5)]),v(6),v(7),mean([v(8),v(9)]),v(10)]
+    
+    figure(5); clf; hold on;
+    plot(abs(rotSpeed),processedCompScore,'b');
+    plot(abs(rotSpeed),processedDistortScore,'r')
+    legend('Compensated score','Distorted score');
+    xlabel('Rotational speed');
+    ylabel('Normalized matching score');
+
 end
