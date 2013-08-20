@@ -14,15 +14,31 @@
 %   /brief  Compares each frame from a particular trial to a frame from a
 %           reference set of image stacks.
 function CompareFrameToReferenceFrame()
+
+    %Hand computed reference indexes
+    referenceIndexes(1,:) = [1 ,1:86]
+    referenceIndexes(2,:) = [1,1,1,1,1,6,8,8,9,11,12,13,14,15,16,17,19,20,21,22,23,24,26,27,29,31,32,34,35,36,38,40,42,43,44,45,46,47,49,50,51,52,53,54,55,57,58,zeros(1,40)];
+    referenceIndexes(3,:) = [3,3,3,6,7,9,10,13,14,15,17,19,20,22,24,26,27,28,30,33,34,36,38,40,41,43,45,47,49,51,53,54,57,58,60,61,62,64,66,68,71,73,75,zeros(1,44)];
+    referenceIndexes(4,:) = [1,1,4,7,8,10,12,14,16,18,20,22,24,26,28,30,33,35,38,40,43,45,48,51,52,54,56,zeros(1,60)];
+    referenceIndexes(5,:) = [1,2,1,6,7,9,11,13,15,17,19,21,23,26,28,30,32,35,37,40,42,45,47,49,51,53,55,59,61,zeros(1,58)];
+    referenceIndexes(6,:) = [1,1,2,6,9,12,14,16,18,21,23,25,28,31,34,37,40,43,45,49,52,54,57,60,64,68,71,zeros(1,60)];
+    referenceIndexes(7,:) = [1,7,7,9,12,14,17,19,22,25,29,31,34,37,42,45,50,52,55,59,65,69,73,zeros(1,64)];
+    referenceIndexes(8,:) = [3,3,3,3,8,12,15,19,22,25,30,34,37,41,45,49,53,55,62,zeros(1,68)];
+    referenceIndexes(9,:) = [1,1,6,10,12,17,20,24,27,32,37,41,46,51,59,zeros(1,72)];
+    referenceIndexes(10,:) =[3,5,6,11,14,18,22,27,31,36,41,46,50,53,60,zeros(1,72)];    
+    v = [ -0.0911,-0.1010,-0.1088,-0.2012,-0.2060,-0.2330,-0.2527,-0.2933,-0.2953,-0.3629]
+    
     DEBUG = 0;
-    brightnessFactor = 255;
+    brightnessFactor = 256;
+    autoComputeViewpoint = 0;
     
     %Set root dirs from compensated and uncompensated image stacks
-    compRootDir = '/mnt/data/Datasets/Features/RANSAC-Comp/';
+    compRootDir = '/mnt/data/Datasets/Features/Compensated/';
     distortedRootDir = '/mnt/data/Datasets/Features/02-Feb-13/';
     
     %Set dirs from which to load imagestacks
-    referenceDir = '/mnt/data/Datasets/Features/02-Feb-13/ImageStacks/smoothturning-0.0-0.25-13:06/0001/';
+    %referenceDir = '/mnt/data/Datasets/Features/02-Feb-13/ImageStacks/smoothturning-0.0-0.25-13:06/0001/';
+    referenceDir = '/mnt/data/Datasets/Features/Compensated/ImageStacks/smoothturning-0.0-0.25-13:06/0001/';
     compDir = [compRootDir 'ImageStacks/']
     distortedDir = [distortedRootDir 'ImageStacks/']
     
@@ -35,9 +51,12 @@ function CompareFrameToReferenceFrame()
     
     %Load groundtruth data for reference trial
     fileList = dir([distortedRootDir 'Bags/Processed/Turning/' 'smoothturning-0.0-0.25-13:06*']);
-    [T_ref, t_ref,~,~] = ParseViconGroundTruth([distortedRootDir 'Bags/Processed/Turning/'],fileList,0,1);    
-    T_ref_out = FindFrameTransforms(referenceDir,T_ref,t_ref);
-        
+    
+    if(autoComputeViewpoint)
+        [T_ref, t_ref,~,~] = ParseViconGroundTruth([distortedRootDir 'Bags/Processed/Turning/'],fileList,0,1);    
+        T_ref_out = FindFrameTransforms(referenceDir,T_ref,t_ref);
+    end
+    
     %Loop over each directory and process file
     for dirIndex = 1 : size(distortedDirs,1)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -45,7 +64,7 @@ function CompareFrameToReferenceFrame()
         %Hack for garbage data
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %if(dirIndex==4 || dirIndex==5)
+        %if(dirIndex==5)
         %    continue;
         %end
         distortedFilePath = distortedDirs (dirIndex);
@@ -59,30 +78,34 @@ function CompareFrameToReferenceFrame()
         %once, since the robot location is the same 
         filteredFileName = regexp(distortedFilePath.name,'^([a-z]+)-([0-9]+.[0-9]+)-([0-9]+.[0-9]+)-','match')
         fileList = dir([distortedRootDir 'Bags/Processed/Turning/' filteredFileName{:} '*']);
-        [T_current, t_current,~,~] = ParseViconGroundTruth([distortedRootDir 'Bags/Processed/Turning/'],fileList(1),0,1);
-        T_compframes_out = FindFrameTransforms([distortedDir distortedFilePath.name '/0001/'],T_current,t_current);
+        %[T_current, t_current,~,~] = ParseViconGroundTruth([distortedRootDir 'Bags/Processed/Turning/'],fileList(1),0,1);
+        %T_compframes_out = FindFrameTransforms([distortedDir distortedFilePath.name '/0001/'],T_current,t_current);
         
         compSum = 0;
         distortSum = 0;
         if(size(compedImageStacks,1)>0)
-            for frameIndex = 1 : min(size(distortedImageStacks,1),size(compedImageStacks,1)) - 3
+            for frameIndex = 1 : min([size(distortedImageStacks,1),size(compedImageStacks,1),sum((referenceIndexes(dirIndex,:)>0))]) - 3
                 %Load files to compare
                 compensatedScan = loadAsrlMatArchive([compDir compFilePath.name '/0001/' compedImageStacks(frameIndex).name]);                
                 distortedScan  = loadAsrlMatArchive([distortedDir distortedFilePath.name '/0001/' distortedImageStacks(frameIndex).name]);
                 
-                %Get matching frame from reference series
-                T = T_compframes_out(:,:,frameIndex);
-                idx = FindReferenceFrame(T_ref_out,T);
-                idx,frameIndex
+                if(autoComputeViewpoint)
+                    %Get matching frame from reference series (auto)
+                    %T = T_compframes_out(:,:,frameIndex);
+                    %idx = FindReferenceFrame(T_ref_out,T);
+                else  
+                    idx = referenceIndexes(dirIndex,frameIndex)
+                end
                 
                 %Get reference image
                 referenceFrame = loadAsrlMatArchive([referenceDir referenceImageStacks(idx).name]);
-                
-                [compScore(dirIndex,frameIndex) compTrackLegnth(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'');
-                [distortScore(dirIndex,frameIndex) distortTrackLegnth(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'');
+                close all;
+                [compScore(dirIndex,frameIndex) compTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'');
+                [distortScore(dirIndex,frameIndex) distortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'');
+                pause(1);
                 
                 %Compare comped and uncomped scans
-                if(DEBUG)
+                if(DEBUG && autoComputeViewpoint)
                 	figure(999); clf;
                     hold on; axis equal; grid on;
                     %Label and plot origin frame
@@ -108,9 +131,28 @@ function CompareFrameToReferenceFrame()
         end
     end
     
+    
+    
+    
+    %Compute mean matching scores
+    meanCompScore = (sum(compScore') ./ sum(compScore'>0));
+    meanDistortScore = (sum(distortScore') ./ sum(distortScore'>0));
+        
+    processedCompScore = [meanCompScore(1:3),meanCompScore(4),meanCompScore(6),meanCompScore(7),0.5*(meanCompScore(8)+meanCompScore(9)),meanCompScore(10)]
+    processedDistortScore = [meanDistortScore(1:3),meanDistortScore(4),meanDistortScore(6),meanDistortScore(7),0.5*(meanDistortScore(8)+meanDistortScore(9)),meanDistortScore(10)]
+    rotSpeed = [v(1:3),v(5),v(6),v(7),0.5*(v(8)+v(9)),v(10)]
+    
     figure(1); clf; hold on;
-    plot((sum(compScore') ./ sum(compScore'>0)),'b');
-    plot((sum(distortScore') ./ sum(distortScore'>0)),'r')
+    plot(abs(rotSpeed),processedCompScore,'b');
+    plot(abs(rotSpeed),processedDistortScore,'r')
+    legend('Compensated score','Distorted score');
+    xlabel('Rotational speed');
+    ylabel('Normalized matching score');
+        
+    %Plot results
+    figure(2); clf; hold on;
+    plot(meanCompScore,'b');
+    plot(meanDistortScore,'r')
     legend('Compensated score','Distorted score');
     xlabel('Rotational speed');
     ylabel('Normalized matching score');
