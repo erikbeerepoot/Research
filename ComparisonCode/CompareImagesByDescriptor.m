@@ -171,23 +171,16 @@ function [score,avgTrackLength] = CompareByMSERRegions(im1,im2,doPlot,doSave)
 end
 
 function [score,avgTrackLength] = CompareSURFDescriptors(im1,im2,feat1,feat2,doPlot,doSave)
-    kDescThreshold = 0.020;
-    kDistanceThreshold = 100;
+    kDescThreshold = 0.030;
+    kDistanceThreshold = inf;
     
     %Extract features and decide which one to use as query vector
     descs1 = extractFeatures(im1,feat1);
     descs2 = extractFeatures(im2,feat2);
-
-    if(size(descs1,1) < size(descs2,1))
-        qDescs = descs1;
-        refDescs = descs2;
-    else
-        qDescs = descs2;
-        refDescs = descs1;
-    end
-
+    qDescs = descs2;
+    refDescs = descs1;
+ 
     kdtreeNS = KDTreeSearcher(refDescs);
-
     if(doPlot==1)
         h = figure; clf; imshow(im1); hold on;
     end
@@ -202,31 +195,16 @@ function [score,avgTrackLength] = CompareSURFDescriptors(im1,im2,feat1,feat2,doP
         % Matching criterion         
         if((1 - qDescs(featIndex,:)*refDescs(neighbourIndex,:)') < kDescThreshold)
             magnitude = 0;
-            if(size(descs1,1) < size(descs2,1))
-                vector = abs([feat1.Location(featIndex,1),feat1.Location(featIndex,2)] - [feat2.Location(neighbourIndex,1),feat2.Location(neighbourIndex,2)]);
-                magnitude = sqrt(vector(1)^2 + vector(2)^2);
-                if(magnitude > kDistanceThreshold)
-                    featIndex = featIndex + 1;             
-                    continue;
-                end
-                
-                
-                if(doPlot==1 || doSave==1)
-                    line([feat1.Location(featIndex,1),feat2.Location(neighbourIndex,1)],[feat1.Location(featIndex,2),feat2.Location(neighbourIndex,2)],'LineWidth',2,'Color','green');
-                end
-            else
-                vector = abs([feat1.Location(neighbourIndex,1),feat1.Location(neighbourIndex,2)] - [feat2.Location(featIndex,1),feat2.Location(featIndex,2)]);
-                magnitude = sqrt(vector(1)^2 + vector(2)^2);
-                if(magnitude > kDistanceThreshold) 
-                    featIndex = featIndex + 1;             
-                    continue;
-                end
-
-                if(doPlot==1 || doSave==1)
-                    line([feat1.Location(neighbourIndex,1),feat2.Location(featIndex,1)],[feat1.Location(neighbourIndex,2),feat2.Location(featIndex,2)],'LineWidth',2,'Color','green');
-                end
+            vector = abs([feat1.Location(neighbourIndex,1),feat1.Location(neighbourIndex,2)] - [feat2.Location(featIndex,1),feat2.Location(featIndex,2)]);
+            magnitude = sqrt(vector(1)^2 + vector(2)^2);
+            if(magnitude > kDistanceThreshold) 
+                featIndex = featIndex + 1;             
+                continue;
             end
-            
+
+            if(doPlot==1 || doSave==1)
+                line([feat1.Location(neighbourIndex,1),feat2.Location(featIndex,1)],[feat1.Location(neighbourIndex,2),feat2.Location(featIndex,2)],'LineWidth',2,'Color','green');
+            end
             magnitudeSum = magnitudeSum + magnitude;
             
             %Match

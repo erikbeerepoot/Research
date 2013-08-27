@@ -29,21 +29,19 @@ dataPaths{1} = '/Users/erik/Dataset/12-May-12/';
 dataPaths{2} = '/home/eeb/Datasets/Features/02-Feb-13/';
 dataPaths{3} = '/home/eeb/Datasets/Features/12-May-12/';
 dataPaths{4} = '/mnt/data/Datasets/Features/02-Feb-13/';
-dataPaths{5} = '/mnt/data/Datasets/Features/12-May-12/';
-dataPath = dataPaths{5};
+dataPath = dataPaths{4};
 
 outPaths{1} = '/home/eeb/Datasets/Features/Compensated/02-Feb-13/';
-outPaths{2} = '/mnt/data/Datasets/Features/Compensated/12-May-12/';
-outPath = outPaths{2};
+outPath = outPaths{1};
 
 if(calcVel)
     %1(i) Grab the transformation matrices
     %[T,t] = ParseVicon(0,0,[dataPath 'Bags/']);
     fileList = dir([dataPath 'Bags/Processed/turning/' 'smooth*']);
-    [T,t] = ParseViconGroundTruth([dataPath 'Bags/Processed/turning/'],fileList,1,0);
+    [T,t] = ParseViconGroundTruth([dataPath 'Bags/Processed/turning/'],fileList,0,1);
 
     % In the ImageStacks folder, we find a folder for each trial 
-    full_dirlist = dir([dataPath 'ImageStacks/turning/smooth*']);
+    full_dirlist = dir([dataPath 'ImageStacks/smooth*']);
     
     %Exclude regular files (only use dirs)
     isub = [full_dirlist(:).isdir];

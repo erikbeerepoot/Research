@@ -15,9 +15,10 @@
 %
 function CompareFrameToFrame()
     DEBUG = 0;
-
+    brightnessFactor = 256;
+    
     %Set root dirs from compensated and uncompensated image stacks
-    compDir = '/mnt/data/Datasets/Features/RANSAC-Comp/ImageStacks/';
+    compDir = '/mnt/data/Datasets/Features/Compensated/02-Feb-13/ImageStacks/';
     distortedDir = '/mnt/data/Datasets/Features/02-Feb-13/ImageStacks/';
     
     %Get directories containing image stacks
@@ -33,8 +34,21 @@ function CompareFrameToFrame()
         distortedImageStacks = dir([distortedDir distortedFilePath.name '/0001/*.asa']);
         compedImageStacks = dir([compDir compFilePath.name '/0001/*.asa']);
         
-        compSum = 0;
-        distortSum = 0;
+        compSumSURF = 0;
+        distortSumSURF = 0;
+        
+        compSumFAST = 0;
+        distortSumFAST = 0;
+        
+        compSumHarris = 0;
+        distortSumHarris = 0;
+        
+        compSumHarrAff = 0;
+        distortSumHarrAff = 0;
+        
+        compSumMSER = 0;
+        distortSumMSER = 0;
+        
         if(size(compedImageStacks,1)>0)
             for i = 1 : min(size(compedImageStacks,1),size(compedImageStacks,1)) - 3
                 %Load files to compare
@@ -47,19 +61,41 @@ function CompareFrameToFrame()
                     close all;
                 end
                 
-                fileNamePostFix = sprintf('real-lowthres-compensated-%d',i);
-                compensatedScan1.intense8Img = compensatedScan1.intense8Img  / 256;
-                compensatedScan2.intense8Img = compensatedScan2.intense8Img  / 256;
-                [compNormMatchingScore(dirIndex,i),compTrackLength(dirIndex,i)]       = CompareImagesByDescriptor(compensatedScan1.intense8Img, compensatedScan2.intense8Img,DEBUG,0,fileNamePostFix);
+                compensatedScan1.intense8Img = compensatedScan1.intense8Img / brightnessFactor;
+                compensatedScan2.intense8Img = compensatedScan2.intense8Img / brightnessFactor;
+                distortedScan1.intense8Img = distortedScan1.intense8Img / brightnessFactor;
+                distortedScan2.intense8Img = distortedScan2.intense8Img / brightnessFactor;
                 
-                fileNamePostFix = sprintf('real-lowthres-uncomp-%d',i);
-                distortedScan1.intense8Img = distortedScan1.intense8Img  / 256;
-                distortedScan2.intense8Img = distortedScan2.intense8Img  / 256;
-                [distortedNormMatchingScore(dirIndex,i),distortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan1.intense8Img, distortedScan2.intense8Img,DEBUG,0,fileNamePostFix);
-                
+                [SURFcompNormMatchingScore(dirIndex,i),SURFcompTrackLength(dirIndex,i)]       = CompareImagesByDescriptor(compensatedScan1.intense8Img,compensatedScan2.intense8Img,0,0,'SURF');
+                [SURFdistortedNormMatchingScore(dirIndex,i), SURFdistortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan1.intense8Img,distortedScan2.intense8Img,0,0,'SURF');
+                                
+%                 [FASTcompNormMatchingScore(dirIndex,i),FASTcompTrackLength(dirIndex,i)]       = CompareImagesByDescriptor(compensatedScan1.intense8Img,compensatedScan2.intense8Img,0,0,'FAST');
+%                 [FASTdistortedNormMatchingScore(dirIndex,i), FASTdistortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan1.intense8Img,distortedScan2.intense8Img,0,0,'FAST');
+%                 
+%                 [HarrisCompNormMatchingScore(dirIndex,i),HarrisCompTrackLength(dirIndex,i)]       = CompareImagesByDescriptor(compensatedScan1.intense8Img,compensatedScan2.intense8Img,0,0,'Harris');
+%                 [HarrisDistortedNormMatchingScore(dirIndex,i), HarrisDistortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan1.intense8Img,distortedScan2.intense8Img,0,0,'Harris');
+%                 
+%                 [HarrAffCompNormMatchingScore(dirIndex,i),HarrAffCompTrackLength(dirIndex,i)]       = CompareImagesByDescriptor(compensatedScan1.intense8Img,compensatedScan2.intense8Img,0,0,'HarrisAffine');
+%                 [HarrAffDistortedNormMatchingScore(dirIndex,i), HarrAffDistortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan1.intense8Img,distortedScan2.intense8Img,0,0,'HarrisAffine');
+%                 
+%                 [MSERCompNormMatchingScore(dirIndex,i),MSERCompTrackLength(dirIndex,i)]       = CompareImagesByDescriptor(compensatedScan1.intense8Img,compensatedScan2.intense8Img,0,0,'MSER');
+%                 [MSERDistortedNormMatchingScore(dirIndex,i), MSERDistortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan1.intense8Img,distortedScan2.intense8Img,0,0,'MSER');
+%                 
                 %Compute score
-                compSum    = compSum + compNormMatchingScore(dirIndex,i);
-                distortSum = distortSum + distortedNormMatchingScore(dirIndex,i); 
+                compSumSURF    = compSumSURF + SURFcompNormMatchingScore(dirIndex,i);
+                distortSumSURF = distortSumSURF + SURFdistortedNormMatchingScore(dirIndex,i); 
+                
+%                 compSumFAST    = compSumFAST + FASTcompNormMatchingScore(dirIndex,i);
+%                 distortSumFAST = distortSumFAST + FASTdistortedNormMatchingScore(dirIndex,i); 
+%                 
+%                 compSumHarris    = compSumHarris + HarrisCompNormMatchingScore(dirIndex,i);
+%                 distortSumHarris = distortSumHarris + HarrisDistortedNormMatchingScore(dirIndex,i); 
+%                 
+%                 compSumHarrAff    = compSumHarrAff + HarrAffCompNormMatchingScore(dirIndex,i);
+%                 distortSumHarrAff = distortSumHarrAff + HarrAffDistortedNormMatchingScore(dirIndex,i); 
+%                 
+%                 compSumMSER    = compSumMSER + MSERCompNormMatchingScore(dirIndex,i);
+%                 distortSumMSER = distortSumMSER + MSERDistortedNormMatchingScore(dirIndex,i); 
             end
             
             if(DEBUG)
@@ -72,16 +108,45 @@ function CompareFrameToFrame()
             end
         end
 
-        distortedFilePath.name
-        compFilePath.name
-        
-        compScore(dirIndex) = compSum / size(compedImageStacks,1);
-        string = sprintf('Average normalized matching score for compensated images: %f',compScore(dirIndex));
+        compScoreSURF(dirIndex) = compSumSURF / size(compedImageStacks,1);
+        string = sprintf('Average normalized matching score for compensated images: %f',compScoreSURF(dirIndex));
         disp(string);
 
-        uncompScore(dirIndex) = distortSum / size(compedImageStacks,1);
-        string = sprintf('Average normalized matching score for distorted images: %f',uncompScore(dirIndex));
+        uncompScoreSURF(dirIndex) = distortSumSURF / size(compedImageStacks,1);
+        string = sprintf('Average normalized matching score for distorted images: %f',uncompScoreSURF(dirIndex));
         disp(string);
+        
+%         compScoreFAST(dirIndex) = compSumFAST/ size(compedImageStacks,1);
+%         string = sprintf('Average normalized matching score for compensated images: %f',compScoreFAST(dirIndex));
+%         disp(string);
+% 
+%         uncompScoreFAST(dirIndex) = distortSumFAST / size(compedImageStacks,1);
+%         string = sprintf('Average normalized matching score for distorted images: %f',uncompScoreFAST(dirIndex));
+%         disp(string);
+%         
+%         compScoreHarris(dirIndex) = compSumHarris / size(compedImageStacks,1);
+%         string = sprintf('Average normalized matching score for compensated images: %f',compScoreHarris(dirIndex));
+%         disp(string);
+% 
+%         uncompScoreHarris(dirIndex) = distortSumHarris / size(compedImageStacks,1);
+%         string = sprintf('Average normalized matching score for distorted images: %f',uncompScoreHarris(dirIndex));
+%         disp(string);
+%         
+%         compScoreHarrAff(dirIndex) = compSumHarrAff / size(compedImageStacks,1);
+%         string = sprintf('Average normalized matching score for compensated images: %f',compScoreHarrAff(dirIndex));
+%         disp(string);
+% 
+%         uncompScoreHarrAff(dirIndex) = distortSumHarrAff / size(compedImageStacks,1);
+%         string = sprintf('Average normalized matching score for distorted images: %f',uncompScoreHarrAff(dirIndex));
+%         disp(string);
+%         
+%         compScoreMSER(dirIndex) = compSumMSER / size(compedImageStacks,1);
+%         string = sprintf('Average normalized matching score for compensated images: %f',compScoreMSER(dirIndex));
+%         disp(string);
+% 
+%         uncompScoreMSER(dirIndex) = distortSumMSER / size(compedImageStacks,1);
+%         string = sprintf('Average normalized matching score for distorted images: %f',uncompScoreMSER(dirIndex));
+%         disp(string);
     end
     
     

@@ -79,42 +79,45 @@ function [v_out] = CompensateImagesPiecewiseVelocity(dataPath,outputDir,T,t_in,t
 %     plot(range,y,'b');
 %     hold off;
 
-    for index = 1:(endFileIndex-1)
-        current_scan = loadAsrlMatArchive([dataDir dirlist(dirIndex).name '/0001/' filelist(index).name]);
-        next_scan    = loadAsrlMatArchive([dataDir dirlist(dirIndex).name '/0001/' filelist(index+1).name]);
-                
-        %Calculate velocity between these frames
-        t1 = current_scan.timestamp;
-        t2 = next_scan.timestamp;
-        vel = CalculateLinearVelocity(T,t_in,dirIndex,offsets,t1,t2,minStamp,0);
-        
-        %DEBUG zero velocity for non-rotating axes
-        vel(1:5) = 0;
-        velSave(:,index) = vel;
-    end
-    
-    %Determine start of motion
-    truncatedVel = velSave(:,abs(velSave(6,:)) > kMovementThreshold);
-    truncatedVelMean = mean(truncatedVel,2)
-    
-    %Reject values that are not close to the steady state value (to
-    %calculate "true" mean
-    aboveLowerThreshold = repmat((1-kEnvelopeRange)*truncatedVelMean,1,size(velSave,2)) >= velSave
-    belowUpperThreshold = repmat((1+kEnvelopeRange)*truncatedVelMean,1,size(velSave,2)) <= velSave
-    motionStart = find(diff(all(aboveLowerThreshold & belowUpperThreshold)))
-    truncatedVel = velSave(:,(all(aboveLowerThreshold & belowUpperThreshold)));
-    
-    %Fit least squares line to velocity data
-    p = polyfit(1:size(truncatedVel,2),truncatedVel(6,:),0);
-    v_out = p(1);
-    
-    %Plot velocity on figure
-    figure(999); hold on;
-    plot(1:(50*size(velSave,2)),p(1),'g.','LineWidth',2);
+%     for index = 1:(endFileIndex-1)
+%         current_scan = loadAsrlMatArchive([dataDir dirlist(dirIndex).name '/0001/' filelist(index).name]);
+%         next_scan    = loadAsrlMatArchive([dataDir dirlist(dirIndex).name '/0001/' filelist(index+1).name]);
+%                 
+%         %Calculate velocity between these frames
+%         t1 = current_scan.timestamp;
+%         t2 = next_scan.timestamp;
+%         vel = CalculateLinearVelocity(T,t_in,dirIndex,offsets,t1,t2,minStamp,0);
+%         
+%         %DEBUG zero velocity for non-rotating axes
+%         vel(1:5) = 0;
+%         velSave(:,index) = vel;
+%     end
+%     
+%     %Determine start of motion
+%     truncatedVel = velSave(:,abs(velSave(6,:)) > kMovementThreshold);
+%     truncatedVelMean = mean(truncatedVel,2)
+%     
+%     %Reject values that are not close to the steady state value (to
+%     %calculate "true" mean
+%     aboveLowerThreshold = repmat((1-kEnvelopeRange)*truncatedVelMean,1,size(velSave,2)) >= velSave
+%     belowUpperThreshold = repmat((1+kEnvelopeRange)*truncatedVelMean,1,size(velSave,2)) <= velSave
+%     motionStart = find(diff(all(aboveLowerThreshold & belowUpperThreshold)))
+%     truncatedVel = velSave(:,(all(aboveLowerThreshold & belowUpperThreshold)));
+%     
+%     %Fit least squares line to velocity data
+%     p = polyfit(1:size(truncatedVel,2),truncatedVel(6,:),0);
+%     v_out = p(1);
+%     
+%     %Plot velocity on figure
+%     figure(999); hold on;
+%     plot(1:(50*size(velSave,2)),p(1),'g.','LineWidth',2);
     
     %HACK, set velocity
-    velSave(6,motionStart:size(velSave,2)) = p(1);
-    return;
+%     velSave(6,motionStart:size(velSave,2)) = p(1);
+    
+    velSave = zeros(6,endFileIndex-1)
+    velSave(6,:) = -0.5;
+
     for index = 1:(endFileIndex-1)
         current_scan = loadAsrlMatArchive([dataDir dirlist(dirIndex).name '/0001/' filelist(index).name]);
         next_scan    = loadAsrlMatArchive([dataDir dirlist(dirIndex).name '/0001/' filelist(index+1).name]);
@@ -139,12 +142,78 @@ function [v_out] = CompensateImagesPiecewiseVelocity(dataPath,outputDir,T,t_in,t
         %velSave(:,index) = vel;
         %vel(1:5) = 0;
         vel = velSave(:,index);
+        vel = [0;0;0;0;0;0.25];
+        
+        %Data fix: "skewed elevation image"
+        %It seems that the elevation image varies in both the u and v
+        %directions. We expect variation in v direction only.
+        current_scan.elevImg = repmat(current_scan.elevImg(:,1),1,size(current_scan.elevImg,2))
          
         %Calculate min & max azimuth and elevation
-        minEl = min(min(current_scan.elevImg));
-        maxEl = max(max(current_scan.elevImg));
-        minAz = min(min(current_scan.azimImg));
-        maxAz = max(max(current_scan.azimImg));
+       minEl = min(min(current_scan.elevImg));
+       maxEl = max(max(current_scan.elevImg));
+       minAz = min(min(current_scan.azimImg));
+       maxAz = max(max(current_scan.azimImg));
+        
+%         minEl = inf;
+%         maxEl = -inf;
+%         minAz = inf;
+%         maxAz = -inf;
+%         for row = 1 : size(current_scan.intense8Img,1)
+%             for col = 1 : size(current_scan.intense8Img,2)
+%                 if(current_scan.maskImg(row,col)==0)
+%                     continue;
+%                 end
+% 
+%                 %a. Grab az,el,range
+%                 az = current_scan.azimImg(row,col); 
+%                 el = current_scan.elevImg(row,col);
+%                 r  = current_scan.rangeImg(row,col);
+% 
+%                 %b. Convert to xyz     
+%                 xyz = azElRange2xyz([az;el;r],'rad');
+% 
+%                 %Create transformation matrix
+%                 t = compensated_scan.timeImg(row,col);
+%                 R = axisAngle2r(vel(4:6)*t,1);
+%                 rho = vel(1:3)*t;
+%                 H = hgToTransform(R,rho);
+% 
+%                 %c. Compensate xyz
+%                 xyz_h = H*[xyz;1];
+%                 xyz = [xyz_h(1)/xyz_h(4);xyz_h(2)/xyz_h(4);xyz_h(3)/xyz_h(4)];
+% 
+%                 %d. Calculate (az,el,range)
+%                 r_new = sqrt(xyz(1)^2 + xyz(2)^2 + xyz(3)^2);
+%                 az_new = atan2(xyz(2),xyz(1));
+%                 el_new = atan(xyz(3)/sqrt(xyz(1)^2 + xyz(2)^2));
+%                 
+%                 if(az_new < minAz)
+%                     minAz = az_new;
+%                 end
+%                 
+%                 if(az_new > maxAz)
+%                     maxAz = az_new;
+%                 end
+%                 
+%                 if(el_new < minEl)
+%                     minEl = el_new;
+%                 end
+%                 
+%                 if(el_new > maxEl)
+%                     maxEl = el_new;
+%                 end
+%             end
+%         end
+%         minEl
+%         maxEl
+%         minAz
+%         maxAz
+        
+        min(min(current_scan.elevImg)) %minEl
+        max(max(current_scan.elevImg)) %maxEl
+        min(min(current_scan.azimImg)) %minAz
+        max(max(current_scan.azimImg)) %maxAz
         
         %Compensate pixel-by-pixel
         pixelTime = t_img / (size(current_scan.intense8Img,1)*size(current_scan.intense8Img,2));
@@ -178,12 +247,19 @@ function [v_out] = CompensateImagesPiecewiseVelocity(dataPath,outputDir,T,t_in,t
                     az_new = atan2(xyz(2),xyz(1));
                     el_new = atan(xyz(3)/sqrt(xyz(1)^2 + xyz(2)^2));
 
-                    minEl = min(current_scan.elevImg(:,col));
-                    maxEl = max(current_scan.elevImg(:,col));
                     [u,v] = AzElRangeToUVMinMax(az_new,el_new,r_new,minEl,maxEl,minAz,maxAz,size(current_scan.intense8Img,1),size(current_scan.intense8Img,2));                    
 
                     if(u<1 || u>size(compensated_scan.intense8Img,2) ||  v<1 || v>size(compensated_scan.intense8Img,1))
                         %nothing
+                        if( u>size(compensated_scan.intense8Img,2) )
+                            disp('exceeded height of image')
+                            u
+                        end
+                        
+                        if( v>size(compensated_scan.intense8Img,1) )
+                            disp('exceeded width of image')
+                            v
+                        end
                     else
                         %Write value to new image stack
                         compensated_scan.intense8Img(v,u) = current_scan.intense8Img(row,col);
@@ -226,10 +302,24 @@ function [v_out] = CompensateImagesPiecewiseVelocity(dataPath,outputDir,T,t_in,t
                     r_new = sqrt(xyz(1)^2 + xyz(2)^2 + xyz(3)^2);
                     az_new = atan2(xyz(2),xyz(1));
                     el_new = atan(xyz(3)/sqrt(xyz(1)^2 + xyz(2)^2));
- 
-                    minEl = min(current_scan.elevImg(:,col));
-                    maxEl = max(current_scan.elevImg(:,col));
+
+                    compensated_scan.intense8Img(row,col) = current_scan.intense8Img(row,col);
+                    compensated_scan.maskImg(row,col) = current_scan.maskImg(row,col);
+                    compensated_scan.elevImg(row,col) = el_new;
+                    compensated_scan.azimImg(row,col) = az_new;
+                    compensated_scan.rangeImg(row,col) = r_new;
+                    
                     [u,v] = AzElRangeToUVMinMax(az_new,el_new,r_new,minEl,maxEl,minAz,maxAz,size(current_scan.intense8Img,1),size(current_scan.intense8Img,2));                    
+                    
+                    rows = 360;
+                    cols = 480;
+                    mel = double((rows)/(abs(double(maxEl-minEl))));
+                    maz = double((cols)/(abs(double(maxAz-minAz))));
+
+                    %Calculate the (u,v) coordinate
+                    u = floor(double(cols - (maz)*((az-minAz))));
+                    v = floor(double(rows - (mel)*(el-minEl)));
+                    
                     
                     if(u<1 || u>size(compensated_scan.intense8Img,2) ||  v<1 || v>size(compensated_scan.intense8Img,1))
                         %nothing
@@ -249,18 +339,18 @@ function [v_out] = CompensateImagesPiecewiseVelocity(dataPath,outputDir,T,t_in,t
         end
 
         %Linear interpolation to fill gaps    
-        for col = 3 : size(current_scan.intense8Img,2) - 2
-            for row = 3 : size(current_scan.intense8Img,1) - 2
-                if(compensated_scan.intense8Img(row,col)==0)
-                    compensated_scan.intense8Img(row,col) = 0.25*(compensated_scan.intense8Img(row-2,col) + compensated_scan.intense8Img(row-1,col) + compensated_scan.intense8Img(row+1,col) + compensated_scan.intense8Img(row+2,col)); 
-                    compensated_scan.intense16Img(row,col) = 0.25*(compensated_scan.intense16Img(row-2,col) + compensated_scan.intense16Img(row-1,col) + compensated_scan.intense16Img(row+1,col) + compensated_scan.intense16Img(row+2,col)); 
-                    %compensated_scan.elevImg(row,col) = 0.25*(compensated_scan.elevImg(row-2,col) + compensated_scan.elevImg(row-1,col) + compensated_scan.elevImg(row+1,col) + compensated_scan.elevImg(row+2,col)); 
-                    %compensated_scan.azimImg(row,col) = 0.25*(compensated_scan.azimImg(row-2,col) + compensated_scan.azimImg(row-1,col) + compensated_scan.azimImg(row+1,col) + compensated_scan.azimImg(row+2,col)); 
-                    %compensated_scan.maskImg(row,col) = 0.25*(compensated_scan.maskImg(row-2,col) + compensated_scan.maskImg(row-1,col) + compensated_scan.maskImg(row+1,col) + compensated_scan.maskImg(row+2,col)); 
-                    %compensated_scan.rangeImg(row,col) = 0.25*(compensated_scan.rangeImg(row-2,col) + compensated_scan.rangeImg(row-1,col) + compensated_scan.rangeImg(row+1,col) + compensated_scan.rangeImg(row+2,col)); 
-                end
-            end
-        end
+%         for col = 3 : size(current_scan.intense8Img,2) - 2
+%             for row = 3 : size(current_scan.intense8Img,1) - 2
+%                 if(compensated_scan.intense8Img(row,col)==0)
+%                     compensated_scan.intense8Img(row,col) = 0.25*(compensated_scan.intense8Img(row-2,col) + compensated_scan.intense8Img(row-1,col) + compensated_scan.intense8Img(row+1,col) + compensated_scan.intense8Img(row+2,col)); 
+%                     compensated_scan.intense16Img(row,col) = 0.25*(compensated_scan.intense16Img(row-2,col) + compensated_scan.intense16Img(row-1,col) + compensated_scan.intense16Img(row+1,col) + compensated_scan.intense16Img(row+2,col)); 
+%                     %compensated_scan.elevImg(row,col) = 0.25*(compensated_scan.elevImg(row-2,col) + compensated_scan.elevImg(row-1,col) + compensated_scan.elevImg(row+1,col) + compensated_scan.elevImg(row+2,col)); 
+%                     %compensated_scan.azimImg(row,col) = 0.25*(compensated_scan.azimImg(row-2,col) + compensated_scan.azimImg(row-1,col) + compensated_scan.azimImg(row+1,col) + compensated_scan.azimImg(row+2,col)); 
+%                     %compensated_scan.maskImg(row,col) = 0.25*(compensated_scan.maskImg(row-2,col) + compensated_scan.maskImg(row-1,col) + compensated_scan.maskImg(row+1,col) + compensated_scan.maskImg(row+2,col)); 
+%                     %compensated_scan.rangeImg(row,col) = 0.25*(compensated_scan.rangeImg(row-2,col) + compensated_scan.rangeImg(row-1,col) + compensated_scan.rangeImg(row+1,col) + compensated_scan.rangeImg(row+2,col)); 
+%                 end
+%             end
+%         end
 
         fprintf('\n');
         
