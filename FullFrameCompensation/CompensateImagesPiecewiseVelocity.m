@@ -20,7 +20,7 @@ function [v_out] = CompensateImagesPiecewiseVelocity(dataPath,outputDir,T,t_in,t
     
     %Post processing
     kernel = [0 1 0; 1 0 1; 0 1 0] / 4;
-    kMovementThreshold = 0.025;
+    kMovementThreshold = 0.001;
     kEnvelopeRange = 0.5;
     
     %Add ASRL some source code to PATH
@@ -73,51 +73,51 @@ function [v_out] = CompensateImagesPiecewiseVelocity(dataPath,outputDir,T,t_in,t
     scanDir = 0;
     velSave = [];
     
+    for index = 1:(endFileIndex-1)
+        current_scan = loadAsrlMatArchive([dataDir dirlist(dirIndex).name '/0001/' filelist(index).name]);
+        next_scan    = loadAsrlMatArchive([dataDir dirlist(dirIndex).name '/0001/' filelist(index+1).name]);
+                
+        %Calculate velocity between these frames
+        t1 = current_scan.timestamp;
+        t2 = next_scan.timestamp;
+        vel = CalculateLinearVelocity(T,t_in,dirIndex,offsets,t1,t2,minStamp,0);
+        
+        %DEBUG zero velocity for non-rotating axes
+        velSave(:,index) = vel;
+    end
     
-%     figure(3); hold on;
-%     plot(range,x,'r');
-%     plot(range,y,'b');
-%     hold off;
-
-%     for index = 1:(endFileIndex-1)
-%         current_scan = loadAsrlMatArchive([dataDir dirlist(dirIndex).name '/0001/' filelist(index).name]);
-%         next_scan    = loadAsrlMatArchive([dataDir dirlist(dirIndex).name '/0001/' filelist(index+1).name]);
-%                 
-%         %Calculate velocity between these frames
-%         t1 = current_scan.timestamp;
-%         t2 = next_scan.timestamp;
-%         vel = CalculateLinearVelocity(T,t_in,dirIndex,offsets,t1,t2,minStamp,0);
-%         
-%         %DEBUG zero velocity for non-rotating axes
-%         vel(1:5) = 0;
-%         velSave(:,index) = vel;
-%     end
-%     
-%     %Determine start of motion
-%     truncatedVel = velSave(:,abs(velSave(6,:)) > kMovementThreshold);
-%     truncatedVelMean = mean(truncatedVel,2)
-%     
-%     %Reject values that are not close to the steady state value (to
-%     %calculate "true" mean
-%     aboveLowerThreshold = repmat((1-kEnvelopeRange)*truncatedVelMean,1,size(velSave,2)) >= velSave
-%     belowUpperThreshold = repmat((1+kEnvelopeRange)*truncatedVelMean,1,size(velSave,2)) <= velSave
-%     motionStart = find(diff(all(aboveLowerThreshold & belowUpperThreshold)))
-%     truncatedVel = velSave(:,(all(aboveLowerThreshold & belowUpperThreshold)));
-%     
-%     %Fit least squares line to velocity data
-%     p = polyfit(1:size(truncatedVel,2),truncatedVel(6,:),0);
-%     v_out = p(1);
-%     
-%     %Plot velocity on figure
-%     figure(999); hold on;
-%     plot(1:(50*size(velSave,2)),p(1),'g.','LineWidth',2);
+    %Determine start of motion
+    truncatedVel = velSave(:,sum(velSave,1) > kMovementThreshold);
+    truncatedVelMean = mean(truncatedVel,2)
     
-    %HACK, set velocity
-%     velSave(6,motionStart:size(velSave,2)) = p(1);
+    %Reject values that are not close to the steady state value (to
+    %calculate "true" mean
+    aboveLowerThreshold = repmat((1-kEnvelopeRange)*truncatedVelMean,1,size(velSave,2)) >= velSave
+    belowUpperThreshold = repmat((1+kEnvelopeRange)*truncatedVelMean,1,size(velSave,2)) <= velSave
+    motionStart = find(diff(all(aboveLowerThreshold & belowUpperThreshold)))
+    if(~isempty(motionStart))
+        truncatedVel = velSave(:,(all(aboveLowerThreshold & belowUpperThreshold)));
+    end
     
-    velSave = zeros(6,endFileIndex-1)
-    velSave(6,:) = -0.5;
-
+    %Fit least squares line to velocity data
+    p(1) = polyfit(1:size(truncatedVel,2),truncatedVel(1,:),0);
+    p(2) = polyfit(1:size(truncatedVel,2),truncatedVel(2,:),0);
+    p(3) = polyfit(1:size(truncatedVel,2),truncatedVel(3,:),0);
+    p(4) = polyfit(1:size(truncatedVel,2),truncatedVel(4,:),0);
+    p(5) = polyfit(1:size(truncatedVel,2),truncatedVel(5,:),0);
+    p(6) = polyfit(1:size(truncatedVel,2),truncatedVel(6,:),0);
+    v_out = p;
+    
+    %Plot velocity on figure
+    col = hsv(6)
+    figure(999); hold on;
+    plot(1:(50*size(velSave,2)),p(1),'.','LineWidth',2,'Color',col(1,:));
+    plot(1:(50*size(velSave,2)),p(2),'.','LineWidth',2,'Color',col(2,:));
+    plot(1:(50*size(velSave,2)),p(3),'.','LineWidth',2,'Color',col(3,:));
+    plot(1:(50*size(velSave,2)),p(4),'.','LineWidth',2,'Color',col(4,:));
+    plot(1:(50*size(velSave,2)),p(5),'.','LineWidth',2,'Color',col(5,:));
+    plot(1:(50*size(velSave,2)),p(6),'.','LineWidth',2,'Color',col(6,:));
+    
     for index = 1:(endFileIndex-1)
         current_scan = loadAsrlMatArchive([dataDir dirlist(dirIndex).name '/0001/' filelist(index).name]);
         next_scan    = loadAsrlMatArchive([dataDir dirlist(dirIndex).name '/0001/' filelist(index+1).name]);
@@ -136,18 +136,12 @@ function [v_out] = CompensateImagesPiecewiseVelocity(dataPath,outputDir,T,t_in,t
         compensated_scan.timestamp = current_scan.timestamp;
         
         %Calculate velocity between these frames
-        t1 = current_scan.timestamp;
-        t2 = next_scan.timestamp;
-        %vel = CalculateLinearVelocity(T,t_in,dirIndex,offsets,t1,t2,minStamp,0);
-        %velSave(:,index) = vel;
-        %vel(1:5) = 0;
         vel = velSave(:,index);
-        vel = [0;0;0;0;0;0.25];
         
         %Data fix: "skewed elevation image"
         %It seems that the elevation image varies in both the u and v
         %directions. We expect variation in v direction only.
-        current_scan.elevImg = repmat(current_scan.elevImg(:,1),1,size(current_scan.elevImg,2))
+        %current_scan.elevImg = repmat(current_scan.elevImg(:,1),1,size(current_scan.elevImg,2))
          
         %Calculate min & max azimuth and elevation
        minEl = min(min(current_scan.elevImg));
@@ -302,24 +296,8 @@ function [v_out] = CompensateImagesPiecewiseVelocity(dataPath,outputDir,T,t_in,t
                     r_new = sqrt(xyz(1)^2 + xyz(2)^2 + xyz(3)^2);
                     az_new = atan2(xyz(2),xyz(1));
                     el_new = atan(xyz(3)/sqrt(xyz(1)^2 + xyz(2)^2));
-
-                    compensated_scan.intense8Img(row,col) = current_scan.intense8Img(row,col);
-                    compensated_scan.maskImg(row,col) = current_scan.maskImg(row,col);
-                    compensated_scan.elevImg(row,col) = el_new;
-                    compensated_scan.azimImg(row,col) = az_new;
-                    compensated_scan.rangeImg(row,col) = r_new;
-                    
+   
                     [u,v] = AzElRangeToUVMinMax(az_new,el_new,r_new,minEl,maxEl,minAz,maxAz,size(current_scan.intense8Img,1),size(current_scan.intense8Img,2));                    
-                    
-                    rows = 360;
-                    cols = 480;
-                    mel = double((rows)/(abs(double(maxEl-minEl))));
-                    maz = double((cols)/(abs(double(maxAz-minAz))));
-
-                    %Calculate the (u,v) coordinate
-                    u = floor(double(cols - (maz)*((az-minAz))));
-                    v = floor(double(rows - (mel)*(el-minEl)));
-                    
                     
                     if(u<1 || u>size(compensated_scan.intense8Img,2) ||  v<1 || v>size(compensated_scan.intense8Img,1))
                         %nothing
@@ -339,18 +317,18 @@ function [v_out] = CompensateImagesPiecewiseVelocity(dataPath,outputDir,T,t_in,t
         end
 
         %Linear interpolation to fill gaps    
-%         for col = 3 : size(current_scan.intense8Img,2) - 2
-%             for row = 3 : size(current_scan.intense8Img,1) - 2
-%                 if(compensated_scan.intense8Img(row,col)==0)
-%                     compensated_scan.intense8Img(row,col) = 0.25*(compensated_scan.intense8Img(row-2,col) + compensated_scan.intense8Img(row-1,col) + compensated_scan.intense8Img(row+1,col) + compensated_scan.intense8Img(row+2,col)); 
-%                     compensated_scan.intense16Img(row,col) = 0.25*(compensated_scan.intense16Img(row-2,col) + compensated_scan.intense16Img(row-1,col) + compensated_scan.intense16Img(row+1,col) + compensated_scan.intense16Img(row+2,col)); 
-%                     %compensated_scan.elevImg(row,col) = 0.25*(compensated_scan.elevImg(row-2,col) + compensated_scan.elevImg(row-1,col) + compensated_scan.elevImg(row+1,col) + compensated_scan.elevImg(row+2,col)); 
-%                     %compensated_scan.azimImg(row,col) = 0.25*(compensated_scan.azimImg(row-2,col) + compensated_scan.azimImg(row-1,col) + compensated_scan.azimImg(row+1,col) + compensated_scan.azimImg(row+2,col)); 
-%                     %compensated_scan.maskImg(row,col) = 0.25*(compensated_scan.maskImg(row-2,col) + compensated_scan.maskImg(row-1,col) + compensated_scan.maskImg(row+1,col) + compensated_scan.maskImg(row+2,col)); 
-%                     %compensated_scan.rangeImg(row,col) = 0.25*(compensated_scan.rangeImg(row-2,col) + compensated_scan.rangeImg(row-1,col) + compensated_scan.rangeImg(row+1,col) + compensated_scan.rangeImg(row+2,col)); 
-%                 end
-%             end
-%         end
+        for col = 3 : size(current_scan.intense8Img,2) - 2
+            for row = 3 : size(current_scan.intense8Img,1) - 2
+                if(compensated_scan.intense8Img(row,col)==0)
+                    compensated_scan.intense8Img(row,col) = 0.25*(compensated_scan.intense8Img(row-2,col) + compensated_scan.intense8Img(row-1,col) + compensated_scan.intense8Img(row+1,col) + compensated_scan.intense8Img(row+2,col)); 
+                    compensated_scan.intense16Img(row,col) = 0.25*(compensated_scan.intense16Img(row-2,col) + compensated_scan.intense16Img(row-1,col) + compensated_scan.intense16Img(row+1,col) + compensated_scan.intense16Img(row+2,col)); 
+                    %compensated_scan.elevImg(row,col) = 0.25*(compensated_scan.elevImg(row-2,col) + compensated_scan.elevImg(row-1,col) + compensated_scan.elevImg(row+1,col) + compensated_scan.elevImg(row+2,col)); 
+                    %compensated_scan.azimImg(row,col) = 0.25*(compensated_scan.azimImg(row-2,col) + compensated_scan.azimImg(row-1,col) + compensated_scan.azimImg(row+1,col) + compensated_scan.azimImg(row+2,col)); 
+                    %compensated_scan.maskImg(row,col) = 0.25*(compensated_scan.maskImg(row-2,col) + compensated_scan.maskImg(row-1,col) + compensated_scan.maskImg(row+1,col) + compensated_scan.maskImg(row+2,col)); 
+                    %compensated_scan.rangeImg(row,col) = 0.25*(compensated_scan.rangeImg(row-2,col) + compensated_scan.rangeImg(row-1,col) + compensated_scan.rangeImg(row+1,col) + compensated_scan.rangeImg(row+2,col)); 
+                end
+            end
+        end
 
         fprintf('\n');
         
@@ -368,5 +346,6 @@ function [v_out] = CompensateImagesPiecewiseVelocity(dataPath,outputDir,T,t_in,t
         end
         imwrite(compensated_scan.intense8Img/256,[outputDir dirlist(dirIndex).name '/0001/' filelist(index).name '.comp.png'],'png');
         saveAsrlMatArchive([outputDir dirlist(dirIndex).name '/0001/' filelist(index).name '.comp.asa'],compensated_scan);
+        index
     end    
 end

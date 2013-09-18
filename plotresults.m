@@ -50,3 +50,23 @@
     %Plot errorbars
     errorbar(abs(rotSpeed),processedCompLength,processedCompLengthStd,'b');
     errorbar(abs(rotSpeed),processedDistortLength,processedDistortLengthStd,'r');
+    
+    figure(3); clf; hold on;
+    plot(surfCompScore(1,:),'b');
+    plot(surfDistortScore(1,:),'r');
+    hold off;
+    
+    figure(4); clf; hold on;
+    plot(surfCompScore(2,surfCompScore(2,:)>0),'b');
+    plot(surfDistortScore(2,surfDistortScore(2,:)>0),'r');
+    hold off;
+    
+    figure(5); clf; hold on;
+    plot(surfCompScore(4,surfCompScore(4,:)>0),'b');
+    plot(surfDistortScore(4,surfDistortScore(4,:)>0),'r');
+    hold off;
+    
+    figure(6); clf; hold on;
+    plot(surfCompScore(6,surfCompScore(6,:)>0),'b');
+    plot(surfDistortScore(6,surfDistortScore(6,:)>0),'r');
+    hold off;

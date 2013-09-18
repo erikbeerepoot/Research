@@ -42,7 +42,7 @@ end
 
 function [score,avgTrackLength] = CompareBySURFFeatures(im1,im2,doPlot,doSave)
     dirIndex = 1;
-    numberOfFeatures = 150;
+    numberOfFeatures = 200;
     
     %Assign default output values
     score = 0;
@@ -171,7 +171,7 @@ function [score,avgTrackLength] = CompareByMSERRegions(im1,im2,doPlot,doSave)
 end
 
 function [score,avgTrackLength] = CompareSURFDescriptors(im1,im2,feat1,feat2,doPlot,doSave)
-    kDescThreshold = 0.030;
+    kDescThreshold = 0.025;
     kDistanceThreshold = inf;
     
     %Extract features and decide which one to use as query vector
