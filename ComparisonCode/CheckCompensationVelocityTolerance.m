@@ -84,15 +84,17 @@ function CheckCompensationVelocityTolerance()
                     
                     
                     fileNamePostFix = sprintf('real-lowthres-compensated-%d',i);                    
-                    [compNormMatchingScore,compTrackLength(dirIndex,i)]       = CompareImagesByDescriptor(commonImgPart1.intense8Img,commonImgPart2.intense8Img,DEBUG,0,'SURF');
+                    [compNormMatchingScore(dirIndex,i),compTrackLength(dirIndex,i)]       = CompareImagesByDescriptor(commonImgPart1.intense8Img,commonImgPart2.intense8Img,DEBUG,0,'SURF');
                                             
                     %Compute score
-                    compSum = compSum + compNormMatchingScore;
+                    compSum = compSum + compNormMatchingScore(dirIndex,i);
                 end
             end
             
             % -1 since we're comparing n-1 pairs
             compScore(dirIndex,compSpeedIndex) = compSum / (size(files,1)-1);
+            compStd(dirIndex,compSpeedIndex) = std(compNormMatchingScore(dirIndex,compNormMatchingScore(dirIndex,:)>0))
+            
             
             if(DEBUG)
                 string = sprintf('Average normalized matching score for compensated images: %f',compScore(dirIndex));
@@ -111,10 +113,12 @@ function CheckCompensationVelocityTolerance()
      cc = hsv(size(compScore,1));
      for index = 1 : size(compScore,1)
          plot(x,compScore(index,:),'Color',cc(index,:),'LineWidth',2,'Marker','x');
+         %errorbar(x,compScore(index,:),compStd(index,:),'Color',cc(index,:),'LineWidth',2);
      end
      
      xlabel('Fraction of groundtruth velocity used for compensation');
      ylabel('Average normalized matching score');  
+     title('Normalized Matching Score vs. Fraction of groundtruth velocity used for compensation')
      legend(simSpeedsDirlist.name);
 
    
