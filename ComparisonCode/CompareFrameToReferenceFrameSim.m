@@ -17,9 +17,10 @@ function CompareFrameToReferenceFrameSim()
 
     
     kFrameTime = 0.5; %2 Hz lidar
+    fov = [90 45];
     DEBUG = 0;
     brightnessFactor = 1;
-    autoComputeViewpoint = 0;
+    
     
     figOutputPath = '~/Dropbox/Research/Images/Plots/'
     
@@ -84,44 +85,43 @@ function CompareFrameToReferenceFrameSim()
                 try
                     referenceFrame = loadAsrlMatArchive([referenceDir referenceImageStacks(refIdx).name]);
                 catch
-                    disp('balls!')
+                    disp('error!')
                 end
                 close all;
                 
                 %Run comparison for different detectors with the same
                 %descriptor (SURF)
-                [SURFcompNormMatchingScore(dirIndex,frameIndex) SURFcompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'SURF');
-                [SURFdistortedNormMatchingScore(dirIndex,frameIndex) SURFdistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'SURF');
-                
-                [FASTcompNormMatchingScore(dirIndex,i),FASTcompTrackLength(dirIndex,i)]  = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'FAST');
-                [FASTdistortedNormMatchingScore(dirIndex,i), FASTdistortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'FAST');
-                
-                [HarrisCompNormMatchingScore(dirIndex,i),HarrisCompTrackLength(dirIndex,i)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'Harris');
-                [HarrisDistortedNormMatchingScore(dirIndex,i), HarrisDistortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'Harris');
-                
-                [HarrAffCompNormMatchingScore(dirIndex,i),HarrAffCompTrackLength(dirIndex,i)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'HarrisAffine');
-                [HarrAffDistortedNormMatchingScore(dirIndex,i), HarrAffDistortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'HarrisAffine');
-                
-                [MSERCompNormMatchingScore(dirIndex,i),MSERCompTrackLength(dirIndex,i)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'MSER');
-                [MSERDistortedNormMatchingScore(dirIndex,i), MSERDistortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'MSER');
+                [SURFcompNormMatchingScore(dirIndex,frameIndex) SURFcompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan,referenceFrame,0,0,'SURF');
+                [SURFdistortedNormMatchingScore(dirIndex,frameIndex) SURFdistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan,referenceFrame,0,0,'SURF');
+%                 
+%                 [FASTcompNormMatchingScore(dirIndex,frameIndex),FASTcompTrackLength(dirIndex,frameIndex)]  = CompareImagesByDescriptor(compensatedScan,referenceFrame,0,0,'FAST');
+%                 [FASTdistortedNormMatchingScore(dirIndex,frameIndex), FASTdistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan,referenceFrame,0,0,'FAST');
+%                 
+%                 [HarrisCompNormMatchingScore(dirIndex,frameIndex),HarrisCompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan,referenceFrame,0,0,'Harris');
+%                 [HarrisDistortedNormMatchingScore(dirIndex,frameIndex), HarrisDistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan,referenceFrame,0,0,'Harris');
+%                 
+% %                 [HarrAffCompNormMatchingScore(dirIndex,frameIndex),HarrAffCompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan,referenceFrame,0,0,'HarrisAffine');
+% %                 [HarrAffDistortedNormMatchingScore(dirIndex,frameIndex), HarrAffDistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan,referenceFrame,0,0,'HarrisAffine');
+%                 
+%                 [MSERCompNormMatchingScore(dirIndex,frameIndex),MSERCompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan,referenceFrame,0,0,'MSER');
+%                 [MSERDistortedNormMatchingScore(dirIndex,frameIndex), MSERDistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan,referenceFrame,0,0,'MSER');
 
 
                 compSumSURF    = compSumSURF + SURFcompNormMatchingScore(dirIndex,frameIndex);
                 distortSumSURF = distortSumSURF + SURFdistortedNormMatchingScore(dirIndex,frameIndex); 
-
-                
-                compSumFAST    = compSumFAST + FASTcompNormMatchingScore(dirIndex,i);
-                distortSumFAST = distortSumFAST + FASTdistortedNormMatchingScore(dirIndex,i); 
-                
-                compSumHarris    = compSumHarris + HarrisCompNormMatchingScore(dirIndex,i);
-                distortSumHarris = distortSumHarris + HarrisDistortedNormMatchingScore(dirIndex,i); 
-                
-                compSumHarrAff    = compSumHarrAff + HarrAffCompNormMatchingScore(dirIndex,i);
-                distortSumHarrAff = distortSumHarrAff + HarrAffDistortedNormMatchingScore(dirIndex,i); 
-                
-                compSumMSER    = compSumMSER + MSERCompNormMatchingScore(dirIndex,i);
-                distortSumMSER = distortSumMSER + MSERDistortedNormMatchingScore(dirIndex,i); 
-                
+% 
+%                 compSumFAST    = compSumFAST + FASTcompNormMatchingScore(dirIndex,frameIndex);
+%                 distortSumFAST = distortSumFAST + FASTdistortedNormMatchingScore(dirIndex,frameIndex); 
+%                 
+%                 compSumHarris    = compSumHarris + HarrisCompNormMatchingScore(dirIndex,frameIndex);
+%                 distortSumHarris = distortSumHarris + HarrisDistortedNormMatchingScore(dirIndex,frameIndex); 
+%                 
+% %                 compSumHarrAff    = compSumHarrAff + HarrAffCompNormMatchingScore(dirIndex,frameIndex);
+% %                 distortSumHarrAff = distortSumHarrAff + HarrAffDistortedNormMatchingScore(dirIndex,frameIndex); 
+%                 
+%                 compSumMSER    = compSumMSER + MSERCompNormMatchingScore(dirIndex,frameIndex);
+%                 distortSumMSER = distortSumMSER + MSERDistortedNormMatchingScore(dirIndex,frameIndex); 
+%                 
             end
         end
         compScoreSURF(dirIndex) = compSumSURF / size(compedImageStacks,1);
@@ -129,25 +129,25 @@ function CompareFrameToReferenceFrameSim()
         uncompScoreSURF(dirIndex) = distortSumSURF / size(compedImageStacks,1);
         uncompStdSURF(dirIndex) = std(SURFdistortedNormMatchingScore(dirIndex,SURFdistortedNormMatchingScore(dirIndex,:)>0))
         
-        compScoreFAST(dirIndex) = compSumFAST/ size(compedImageStacks,1);
-        compStdFAST(dirIndex) = std(FASTcompNormMatchingScore(dirIndex,FASTcompNormMatchingScore(dirIndex,:)>0))
-        uncompScoreFAST(dirIndex) = distortSumFAST / size(compedImageStacks,1);
-        uncompStdFAST(dirIndex) = std(FASTdistortedNormMatchingScore(dirIndex,FASTdistortedNormMatchingScore(dirIndex,:)>0))
-        
-        compScoreHarris(dirIndex) = compSumHarris / size(compedImageStacks,1);
-        compStdHarris(dirIndex) = std(HarrisCompNormMatchingScore(dirIndex,HarrisCompNormMatchingScore(dirIndex,:)>0))
-        uncompScoreHarris(dirIndex) = distortSumHarris / size(compedImageStacks,1);
-        uncompStdHarris(dirIndex) = std(HarrisCompNormMatchingScore(dirIndex,HarrisCompNormMatchingScore(dirIndex,:)>0))
-        
-        compScoreHarrAff(dirIndex) = compSumHarrAff / size(compedImageStacks,1);
-        compStdHarrAff(dirIndex) = std(HarrAffCompNormMatchingScore(dirIndex,HarrAffCompNormMatchingScore(dirIndex,:)>0));
-        uncompScoreHarrAff(dirIndex) = distortSumHarrAff / size(compedImageStacks,1);
-        uncompStdHarrAff(dirIndex) = std(HarrAffDistortedNormMatchingScore(dirIndex,HarrAffDistortedNormMatchingScore(dirIndex,:)>0));
-         
-        compScoreMSER(dirIndex) = compSumMSER / size(compedImageStacks,1);
-        compStdMSER(dirIndex) = std(MSERCompNormMatchingScore(dirIndex,MSERCompNormMatchingScore(dirIndex,:)>0));
-        uncompScoreMSER(dirIndex) = distortSumMSER / size(compedImageStacks,1);
-        uncompStdMSER(dirIndex) = std(MSERDistortedNormMatchingScore(dirIndex,MSERDistortedNormMatchingScore(dirIndex,:)>0));
+%         compScoreFAST(dirIndex) = compSumFAST/ size(compedImageStacks,1);
+%         compStdFAST(dirIndex) = std(FASTcompNormMatchingScore(dirIndex,FASTcompNormMatchingScore(dirIndex,:)>0))
+%         uncompScoreFAST(dirIndex) = distortSumFAST / size(compedImageStacks,1);
+%         uncompStdFAST(dirIndex) = std(FASTdistortedNormMatchingScore(dirIndex,FASTdistortedNormMatchingScore(dirIndex,:)>0))
+%         
+%         compScoreHarris(dirIndex) = compSumHarris / size(compedImageStacks,1);
+%         compStdHarris(dirIndex) = std(HarrisCompNormMatchingScore(dirIndex,HarrisCompNormMatchingScore(dirIndex,:)>0))
+%         uncompScoreHarris(dirIndex) = distortSumHarris / size(compedImageStacks,1);
+%         uncompStdHarris(dirIndex) = std(HarrisCompNormMatchingScore(dirIndex,HarrisCompNormMatchingScore(dirIndex,:)>0))
+%         
+% %         compScoeHarrAff(dirIndex) = compSumHarrAff / size(compedImageStacks,1);
+% %         compStdHarrAff(dirIndex) = std(HarrAffCompNormMatchingScore(dirIndex,HarrAffCompNormMatchingScore(dirIndex,:)>0));
+% %         uncompScoreHarrAff(dirIndex) = distortSumHarrAff / size(compedImageStacks,1);
+% %         uncompStdHarrAff(dirIndex) = std(HarrAffDistortedNormMatchingScore(dirIndex,HarrAffDistortedNormMatchingScore(dirIndex,:)>0));
+%          
+%         compScoreMSER(dirIndex) = compSumMSER / size(compedImageStacks,1);
+%         compStdMSER(dirIndex) = std(MSERCompNormMatchingScore(dirIndex,MSERCompNormMatchingScore(dirIndex,:)>0));
+%         uncompScoreMSER(dirIndex) = distortSumMSER / size(compedImageStacks,1);
+%         uncompStdMSER(dirIndex) = std(MSERDistortedNormMatchingScore(dirIndex,MSERDistortedNormMatchingScore(dirIndex,:)>0));
  
     end
     
@@ -166,8 +166,8 @@ uncompStdFAST2 = [uncompStdFAST(9) uncompStdFAST(1:8) uncompStdFAST(10:size(unco
 uncompScoreHarris2 = [uncompScoreHarris(9) uncompScoreHarris(1:8) uncompScoreHarris(10:size(uncompScoreHarris,2))]
 uncompStdHarris2 = [uncompStdHarris(9) uncompStdHarris(1:8) uncompStdHarris(10:size(uncompStdHarris,2))]
 
-uncompScoreHarraff2 = [uncompScoreHarrAff(9) uncompScoreHarrAff(1:8) uncompScoreHarrAff(10:size(uncompScoreHarrAff,2))]
-uncompStdHarraff2 = [uncompStdHarrAff(9) uncompStdHarrAff(1:8) uncompStdHarrAff(10:size(uncompStdHarrAff,2))]
+% uncompScoreHarraff2 = [uncompScoreHarrAff(9) uncompScoreHarrAff(1:8) uncompScoreHarrAff(10:size(uncompScoreHarrAff,2))]
+% uncompStdHarraff2 = [uncompStdHarrAff(9) uncompStdHarrAff(1:8) uncompStdHarrAff(10:size(uncompStdHarrAff,2))]
 
 uncompScoreMSER2 = [uncompScoreMSER(9) uncompScoreMSER(1:8) uncompScoreMSER(10:size(uncompScoreMSER,2))]
 uncompStdMSER2 = [uncompStdMSER(9) uncompStdMSER(1:8) uncompStdMSER(10:size(uncompStdMSER,2))]
@@ -182,8 +182,8 @@ compStdFAST2 = [compStdFAST(9) compStdFAST(1:8) compStdFAST(10:size(compStdFAST,
 compScoreHarris2 = [compScoreHarris(9) compScoreHarris(1:8) compScoreHarris(10:size(compScoreHarris,2))]
 compStdHarris2 = [compStdHarris(9) compStdHarris(1:8) compStdHarris(10:size(compStdHarris,2))]
 
-compScoreHarraff2 = [compScoreHarrAff(9) compScoreHarrAff(1:8) compScoreHarrAff(10:size(compScoreHarrAff,2))]
-compStdHarraff2 = [compStdHarrAff(9) compStdHarrAff(1:8) compStdHarrAff(10:size(compStdHarrAff,2))]
+% compScoreHarraff2 = [compScoreHarrAff(9) compScoreHarrAff(1:8) compScoreHarrAff(10:size(compScoreHarrAff,2))]
+% compStdHarraff2 = [compStdHarrAff(9) compStdHarrAff(1:8) compStdHarrAff(10:size(compStdHarrAff,2))]
 
 compScoreMSER2 = [compScoreMSER(9) compScoreMSER(1:8) compScoreMSER(10:size(compScoreMSER,2))]
 compStdMSER2 = [compStdMSER(9) compStdMSER(1:8) compStdMSER(10:size(compStdMSER,2))]

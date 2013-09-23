@@ -40,7 +40,7 @@ function [score,avgTrackLength] = CompareImagesByDescriptor(im1,im2,doPlot,doSav
 end
 
 
-function [score,avgTrackLength] = CompareBySURFFeatures(im1,im2,doPlot,doSave)
+function [score,avgTrackLength] = CompareBySURFFeatures(in_im1,in_im2,doPlot,doSave)
     dirIndex = 1;
     numberOfFeatures = 200;
     
@@ -49,16 +49,19 @@ function [score,avgTrackLength] = CompareBySURFFeatures(im1,im2,doPlot,doSave)
     avgTrackLength = 0;
         
     %Run AHE
-    im1 = adapthisteq(im1);
-    im2 = adapthisteq(im2);
+    im1 = adapthisteq(in_im1.intense8Img);
+    im2 = adapthisteq(in_im2.intense8Img);
     
     surfKp = detectSURFFeatures(im1);
     surfKp2 = detectSURFFeatures(im2);
     
+    RejectMaskedFeatures(surfKp,in_im1.maskImg);
+    RejectMaskedFeatures(surfKp2,in_im2.maskImg);
+    
     feat1 = surfKp.selectStrongest(numberOfFeatures);
     feat2 = surfKp2.selectStrongest(numberOfFeatures);
     
-      if(length(surfKp)==0 || length(surfKp2)==0)
+    if(length(surfKp)==0 || length(surfKp2)==0)
         disp('No SURF features detected on an image! Skipping...')
         return
     end
@@ -78,7 +81,7 @@ function [score,avgTrackLength] = CompareBySURFFeatures(im1,im2,doPlot,doSave)
     [score,avgTrackLength] = CompareSURFDescriptors(im1,im2,feat1,feat2,doPlot,doSave);
 end
 
-function [score,avgTrackLength] = CompareByFASTFeatures(im1,im2,doPlot,doSave)
+function [score,avgTrackLength] = CompareByFASTFeatures(in_im1,in_im2,doPlot,doSave)
     kNumberOfFeatures = 150;
     kFastTreshold = 30;
        
@@ -87,9 +90,9 @@ function [score,avgTrackLength] = CompareByFASTFeatures(im1,im2,doPlot,doSave)
     avgTrackLength = 0;
     
     %Run AHE
-    im1 = adapthisteq(im1);
-    im2 = adapthisteq(im2);
-   
+    im1 = adapthisteq(in_im1.intense8Img);
+    im2 = adapthisteq(in_im2.intense8Img);
+    
     %Detect FAST features
     hcornerdet = vision.CornerDetector('Method', 'Local intensity comparison (Rosten & Drummond)'); 
     fastFeatures1 = step(hcornerdet, im1);
@@ -101,30 +104,54 @@ function [score,avgTrackLength] = CompareByFASTFeatures(im1,im2,doPlot,doSave)
     feat2 = SURFPoints; 
     feat2 = feat2.append(fastFeatures2, 'Scale', 2);
     
+    RejectMaskedFeatures(feat1,in_im1.maskImg);
+    RejectMaskedFeatures(feat2,in_im2.maskImg);
+    
+    if(size(feat1,1) > kNumberOfFeatures)
+        feat1 = feat1(1:kNumberOfFeatures,:)
+    end
+    
+    if(size(feat2,1) > kNumberOfFeatures)
+        feat2 = feat2(1:kNumberOfFeatures,:)
+    end
+    
     [score,avgTrackLength] = CompareSURFDescriptors(im1,im2,feat1,feat2,doPlot,doSave);
 end
 
-function [score,avgTrackLength] = CompareByHarrisFeatures(im1,im2,doPlot,doSave)
+function [score,avgTrackLength] = CompareByHarrisFeatures(in_im1,in_im2,doPlot,doSave)
+    kNumberOfFeatures = 150;
+    
     %Assign default output values
     score = 0;
     avgTrackLength = 0;
     
     %Run AHE
-    im1 = adapthisteq(im1);
-    im2 = adapthisteq(im2);
+    im1 = adapthisteq(in_im1.intense8Img);
+    im2 = adapthisteq(in_im2.intense8Img);
     
     harrisFeatures1 = detectHarrisFeatures(im1);
     harrisFeatures2 = detectHarrisFeatures(im2);
-    
+        
     feat1 = SURFPoints;
     feat1 = feat1.append(harrisFeatures1.Location,'Scale',2);
     feat2 = SURFPoints;
     feat2 = feat2.append(harrisFeatures2.Location,'Scale',2);
     
+    RejectMaskedFeatures(feat1,in_im1.maskImg);
+    RejectMaskedFeatures(feat2,in_im2.maskImg);
+    
+    if(size(feat1,1) > kNumberOfFeatures)
+        feat1 = feat1(1:kNumberOfFeatures,:)
+    end
+    
+    if(size(feat2,1) > kNumberOfFeatures)
+        feat2 = feat2(1:kNumberOfFeatures,:)
+    end
+    
     [score,avgTrackLength] = CompareSURFDescriptors(im1,im2,feat1,feat2,doPlot,doSave);
 end
 
-function [score,avgTrackLength] = CompareByHarrisAffineFeatures(im1,im2,doPlot,doSave)
+function [score,avgTrackLength] = CompareByHarrisAffineFeatures(in_im1,in_im2,doPlot,doSave)
     detectorRelativePath = '/../contrib/';
     detectorPath = [fileparts(mfilename('fullpath')) detectorRelativePath];
 
@@ -133,8 +160,8 @@ function [score,avgTrackLength] = CompareByHarrisAffineFeatures(im1,im2,doPlot,d
     avgTrackLength = 0;
     
     %Run AHE
-    im1 = adapthisteq(im1);
-    im2 = adapthisteq(im2);
+    im1 = adapthisteq(in_im1.intense8Img);
+    im2 = adapthisteq(in_im2.intense8Img);
     
     %Write intermediate data to temporary storage location
     imwrite(im1, '/tmp/im1.ppm','ppm');
@@ -146,26 +173,52 @@ function [score,avgTrackLength] = CompareByHarrisAffineFeatures(im1,im2,doPlot,d
             
     [s,w] = unix([[detectorPath '/h_affine.ln'] ' -haraff -i /tmp/im2.ppm -o /tmp/im2.haraff threshold=1000']);
     [harrAffFeat2 nb2 dim2]=loadFeatures('/tmp/im2.haraff');
-
+    
     feat1 = SURFPoints;
     feat1 = feat1.append(harrAffFeat1(1:2,:)','Scale',2);
     feat2 = SURFPoints;
     feat2 = feat2.append(harrAffFeat2(1:2,:)','Scale',2);
+
+    
+    RejectMaskedFeatures(feat1,in_im1.maskImg);
+    RejectMaskedFeatures(feat2,in_im2.maskImg);
+    
+    if(size(feat1,1) > kNumberOfFeatures)
+        feat1 = feat1(1:kNumberOfFeatures,:)
+    end
+    
+    if(size(feat2,1) > kNumberOfFeatures)
+        feat2 = feat2(1:kNumberOfFeatures,:)
+    end
     
     [score,avgTrackLength] = CompareSURFDescriptors(im1,im2,feat1,feat2,doPlot,doSave);
 end
 
-function [score,avgTrackLength] = CompareByMSERRegions(im1,im2,doPlot,doSave)
+function [score,avgTrackLength] = CompareByMSERRegions(in_im1,in_im2,doPlot,doSave)
+    kNumberOfFeatures = 150; 
+    
     %Assign default output values
     score = 0;
     avgTrackLength = 0;
         
     %Run AHE
-    im1 = adapthisteq(im1);
-    im2 = adapthisteq(im2);
+    im1 = adapthisteq(in_im1.intense8Img);
+    im2 = adapthisteq(in_im2.intense8Img);
     
     feat1 = detectMSERFeatures(im1);
     feat2 = detectMSERFeatures(im2);
+    
+    RejectMaskedFeatures(feat1,in_im1.maskImg);
+    RejectMaskedFeatures(feat2,in_im2.maskImg);
+    
+    if(size(feat1,1) > kNumberOfFeatures)
+        feat1 = feat1(1:kNumberOfFeatures,:)
+    end
+    
+    if(size(feat2,1) > kNumberOfFeatures)
+        feat2 = feat2(1:kNumberOfFeatures,:)
+    end
+    
     
     [score,avgTrackLength] = CompareSURFDescriptors(im1,im2,feat1,feat2,doPlot,doSave);
 end
@@ -230,4 +283,17 @@ function [feat nb dim]=loadFeatures(file)
     nb=fscanf(fid, '%d',1);
     feat = fscanf(fid, '%f', [5+dim, inf]);
     fclose(fid);
+end
+
+function outFeats = RejectMaskedFeatures(feats,mask)
+    idx = 1;
+    outFeats = SURFPoints;
+    for k = 1 : size(feats,1)
+        x = round(feats.Location(k,1));
+        y = round(feats.Location(k,2));
+        if((x < size(mask,1)) && (y < size(mask,2)) && (mask(x,y)==1))
+           outFeats(idx) = feats(k);
+           idx = idx + 1;
+        end
+    end
 end
