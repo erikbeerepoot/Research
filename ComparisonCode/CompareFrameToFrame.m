@@ -22,8 +22,8 @@ function CompareFrameToFrame()
     %Set root dirs from compensated and uncompensated image stacks
     %compDir = '/mnt/data/Datasets/Features/Compensated/02-Feb-13/ImageStacks/';
     %distortedDir = '/mnt/data/Datasets/Features/02-Feb-13/ImageStacks/';
-    compDir = '/mnt/data/Datasets/Features/sim/compensated-data/'
-    distortedDir = '/mnt/data/Datasets/Features/sim/distorted-data/'
+    compDir = '/mnt/data/Datasets/Features/sim/moon/compensated-data/'
+    distortedDir = '/mnt/data/Datasets/Features/sim/moon/distorted-data/'
     
     %Get directories containing image stacks
     %distortedDirs = dir([distortedDir 'smooth*']);
@@ -73,20 +73,20 @@ function CompareFrameToFrame()
                 %distortedScan1.intense8Img = distortedScan1.intense8Img / brightnessFactor;
                 %distortedScan2.intense8Img = distortedScan2.intense8Img / brightnessFactor;
                 
-                [SURFcompNormMatchingScore(dirIndex,i),SURFcompTrackLength(dirIndex,i)]       = CompareImagesByDescriptor(compensatedScan1.intense8Img,compensatedScan2.intense8Img,0,0,'SURF');
-                [SURFdistortedNormMatchingScore(dirIndex,i), SURFdistortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan1.intense8Img,distortedScan2.intense8Img,0,0,'SURF');
+                [SURFcompNormMatchingScore(dirIndex,i),SURFcompTrackLength(dirIndex,i)]       = CompareImagesByDescriptor(compensatedScan1,compensatedScan2,0,0,'SURF');
+                [SURFdistortedNormMatchingScore(dirIndex,i), SURFdistortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan1,distortedScan2,0,0,'SURF');
                                 
-                [FASTcompNormMatchingScore(dirIndex,i),FASTcompTrackLength(dirIndex,i)]       = CompareImagesByDescriptor(compensatedScan1.intense8Img,compensatedScan2.intense8Img,0,0,'FAST');
-                [FASTdistortedNormMatchingScore(dirIndex,i), FASTdistortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan1.intense8Img,distortedScan2.intense8Img,0,0,'FAST');
+                [FASTcompNormMatchingScore(dirIndex,i),FASTcompTrackLength(dirIndex,i)]       = CompareImagesByDescriptor(compensatedScan1,compensatedScan2,0,0,'FAST');
+                [FASTdistortedNormMatchingScore(dirIndex,i), FASTdistortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan1,distortedScan2,0,0,'FAST');
                 
-                [HarrisCompNormMatchingScore(dirIndex,i),HarrisCompTrackLength(dirIndex,i)]       = CompareImagesByDescriptor(compensatedScan1.intense8Img,compensatedScan2.intense8Img,0,0,'Harris');
-                [HarrisDistortedNormMatchingScore(dirIndex,i), HarrisDistortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan1.intense8Img,distortedScan2.intense8Img,0,0,'Harris');
+                [HarrisCompNormMatchingScore(dirIndex,i),HarrisCompTrackLength(dirIndex,i)]       = CompareImagesByDescriptor(compensatedScan1,compensatedScan2,0,0,'Harris');
+                [HarrisDistortedNormMatchingScore(dirIndex,i), HarrisDistortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan1,distortedScan2,0,0,'Harris');
                 
-                [HarrAffCompNormMatchingScore(dirIndex,i),HarrAffCompTrackLength(dirIndex,i)]       = CompareImagesByDescriptor(compensatedScan1.intense8Img,compensatedScan2.intense8Img,0,0,'HarrisAffine');
-                [HarrAffDistortedNormMatchingScore(dirIndex,i), HarrAffDistortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan1.intense8Img,distortedScan2.intense8Img,0,0,'HarrisAffine');
+                [HarrAffCompNormMatchingScore(dirIndex,i),HarrAffCompTrackLength(dirIndex,i)]       = CompareImagesByDescriptor(compensatedScan1,compensatedScan2,0,0,'HarrisAffine');
+                [HarrAffDistortedNormMatchingScore(dirIndex,i), HarrAffDistortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan1,distortedScan2,0,0,'HarrisAffine');
                  
-                [MSERCompNormMatchingScore(dirIndex,i),MSERCompTrackLength(dirIndex,i)]       = CompareImagesByDescriptor(compensatedScan1.intense8Img,compensatedScan2.intense8Img,0,0,'MSER');
-                [MSERDistortedNormMatchingScore(dirIndex,i), MSERDistortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan1.intense8Img,distortedScan2.intense8Img,0,0,'MSER');
+                [MSERCompNormMatchingScore(dirIndex,i),MSERCompTrackLength(dirIndex,i)]       = CompareImagesByDescriptor(compensatedScan1,compensatedScan2,0,0,'MSER');
+                [MSERDistortedNormMatchingScore(dirIndex,i), MSERDistortTrackLength(dirIndex,i)] = CompareImagesByDescriptor(distortedScan1,distortedScan2,0,0,'MSER');
                 
                 %Compute score
                 compSumSURF    = compSumSURF + SURFcompNormMatchingScore(dirIndex,i);

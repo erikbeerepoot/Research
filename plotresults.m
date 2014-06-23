@@ -28,8 +28,8 @@
     
     %Plot matching score
     figure(1); clf; hold on;
-    plot(abs(rotSpeed),processedCompScore,'b-x');
-    plot(abs(rotSpeed),processedDistortScore,'r-x')
+    plot(abs(rotSpeed),processedCompScore,'b-x','LineWidth',2);
+    plot(abs(rotSpeed),processedDistortScore,'r-x','LineWidth',2)
     legend('Compensated score','Distorted score');
     xlabel('Rotational speed (rad/s)');
     ylabel('Normalized matching score');
@@ -41,8 +41,8 @@
     
     %Plot track length
     figure(2); clf; hold on;
-    plot(abs(rotSpeed),processedCompLength,'b-x');
-    plot(abs(rotSpeed),processedDistortLength,'r-x')
+    plot(abs(rotSpeed),processedCompLength,'b-x','LineWidth',2);
+    plot(abs(rotSpeed),processedDistortLength,'r-x','LineWidth',2)
     legend('Compensated score','Distorted score');
     xlabel('Rotational speed (rad/s)');
     ylabel('Track length (pixels)');
@@ -51,22 +51,59 @@
     errorbar(abs(rotSpeed),processedCompLength,processedCompLengthStd,'b');
     errorbar(abs(rotSpeed),processedDistortLength,processedDistortLengthStd,'r');
     
-    figure(3); clf; hold on;
-    plot(surfCompScore(1,:),'b');
-    plot(surfDistortScore(1,:),'r');
-    hold off;
-    
-    figure(4); clf; hold on;
-    plot(surfCompScore(2,surfCompScore(2,:)>0),'b');
-    plot(surfDistortScore(2,surfDistortScore(2,:)>0),'r');
-    hold off;
-    
-    figure(5); clf; hold on;
-    plot(surfCompScore(4,surfCompScore(4,:)>0),'b');
-    plot(surfDistortScore(4,surfDistortScore(4,:)>0),'r');
-    hold off;
-    
-    figure(6); clf; hold on;
-    plot(surfCompScore(6,surfCompScore(6,:)>0),'b');
-    plot(surfDistortScore(6,surfDistortScore(6,:)>0),'r');
-    hold off;
+%     figure(3); clf; hold on;
+%     plot(surfCompScore(1,:),'b');
+%     plot(surfDistortScore(1,:),'r');
+%     hold off;
+%     
+%     figure(4); clf; hold on;
+%     plot(surfCompScore(2,surfCompScore(2,:)>0),'b');
+%     plot(surfDistortScore(2,surfDistortScore(2,:)>0),'r');
+%     hold off;
+%     
+%     figure(5); clf; hold on;
+%     plot(surfCompScore(4,surfCompScore(4,:)>0),'b');
+%     plot(surfDistortScore(4,surfDistortScore(4,:)>0),'r');
+%     hold off;
+%     
+%     figure(6); clf; hold on;
+%     plot(surfCompScore(6,surfCompScore(6,:)>0),'b');
+%     plot(surfDistortScore(6,surfDistortScore(6,:)>0),'r');
+%     hold off;
+
+%%%% BIMODAL TRACK LENGTH MODEL
+for idx = 1 : size(surfCompScore,1)
+        bimodalCompTrackLength(idx,1) = sum(compTrackLength(idx,1:2:size(compTrackLength,2)) / sum(compTrackLength(idx,1:2:size(compTrackLength,2)) > 0));
+        bimodalCompTrackLength(idx,2) = sum(compTrackLength(idx,2:2:size(compTrackLength,2)) / sum(compTrackLength(idx,2:2:size(compTrackLength,2)) > 0));
+        bimodalDistortTrackLength(idx,1) = sum(distortTrackLength(idx,1:2:size(distortTrackLength,2)) / sum(distortTrackLength(idx,1:2:size(distortTrackLength,2)) > 0));
+        bimodalDistortTrackLength(idx,2) = sum(distortTrackLength(idx,2:2:size(distortTrackLength,2)) / sum(distortTrackLength(idx,2:2:size(distortTrackLength,2)) > 0));
+end
+
+bimodalCompTrackLength2(:,1) = [bimodalCompTrackLength(1,1), mean([bimodalCompTrackLength(2,1),bimodalCompTrackLength(3,1)]),mean([bimodalCompTrackLength(4,1),bimodalCompTrackLength(5,1)]),bimodalCompTrackLength(6,1),bimodalCompTrackLength(7,1),mean([bimodalCompTrackLength(8,1),bimodalCompTrackLength(9,1)]),bimodalCompTrackLength(10,2)]';
+bimodalCompTrackLength2(:,2) = [bimodalCompTrackLength(1,2), mean([bimodalCompTrackLength(2,2),bimodalCompTrackLength(3,2)]),mean([bimodalCompTrackLength(4,2),bimodalCompTrackLength(5,2)]),bimodalCompTrackLength(6,2),bimodalCompTrackLength(7,2),mean([bimodalCompTrackLength(8,2),bimodalCompTrackLength(9,2)]),bimodalCompTrackLength(10,1)]';
+bimodalDistortTrackLength2(:,1) = [bimodalDistortTrackLength(1,2), mean([bimodalDistortTrackLength(2,1),bimodalDistortTrackLength(3,1)]),mean([bimodalDistortTrackLength(4,2),bimodalDistortTrackLength(5,2)]),bimodalDistortTrackLength(6,1),bimodalDistortTrackLength(7,1),mean([bimodalDistortTrackLength(8,2),bimodalDistortTrackLength(9,2)]),bimodalDistortTrackLength(10,2)]';
+bimodalDistortTrackLength2(:,2) = [bimodalDistortTrackLength(1,1), mean([bimodalDistortTrackLength(2,2),bimodalDistortTrackLength(3,2)]),mean([bimodalDistortTrackLength(4,2),bimodalDistortTrackLength(5,1)]),bimodalDistortTrackLength(6,2),bimodalDistortTrackLength(7,2),mean([bimodalDistortTrackLength(8,1),bimodalDistortTrackLength(9,1)]),bimodalDistortTrackLength(10,1)]';
+
+figure; clf; hold on;
+plot(abs(rotSpeed),bimodalCompTrackLength2(:,1),'bx','LineWidth',1)
+plot(abs(rotSpeed),bimodalCompTrackLength2(:,2),'bx','LineWidth',1)
+plot(abs(rotSpeed),bimodalDistortTrackLength2(:,1),'rx','LineWidth',1);
+plot(abs(rotSpeed),bimodalDistortTrackLength2(:,2),'rx','LineWidth',1);
+
+
+coeffs = polyfit(abs(rotSpeed),bimodalCompTrackLength2(:,1)',1)
+coeffs2 = polyfit(abs(rotSpeed),bimodalCompTrackLength2(:,2)',1)
+coeffs3 = polyfit(abs(rotSpeed),bimodalDistortTrackLength2(:,1)',1)
+coeffs4 = polyfit(abs(rotSpeed),bimodalDistortTrackLength2(:,2)',1)
+
+vals=polyval(coeffs,abs(rotSpeed))
+vals2=polyval(coeffs2,abs(rotSpeed))
+vals3=polyval(coeffs3,abs(rotSpeed))
+vals4=polyval(coeffs4,abs(rotSpeed))
+
+plot(abs(rotSpeed),vals,'b-','LineWidth',2);
+plot(abs(rotSpeed),vals2,'b-','LineWidth',2);
+plot(abs(rotSpeed),vals3,'r-','LineWidth',2);
+plot(abs(rotSpeed),vals4,'r-','LineWidth',2);
+
+hold off

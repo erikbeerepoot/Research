@@ -101,11 +101,16 @@ function CompareFrameToReferenceFrame()
                 referenceFrame = loadAsrlMatArchive([referenceDir referenceImageStacks(idx).name]);
                 close all;
                 
+                %Fix: brightness in range
+                compensatedScan.intense8Img = compensatedScan.intense8Img / brightnessFactor;
+                distortedScan.intense8Img = distortedScan.intense8Img / brightnessFactor;
+                referenceFrame.intense8Img = referenceFrame.intense8Img / brightnessFactor;
+                
                 %Run comparison for different detectors with the same
                 %descriptor (SURF)
-                [surfCompScore(dirIndex,frameIndex) compTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'SURF');
-                [surfDistortScore(dirIndex,frameIndex) distortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'SURF');
-                
+                [surfCompScore(dirIndex,frameIndex) compTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan,referenceFrame,0,0,'SURF');
+                [surfDistortScore(dirIndex,frameIndex) distortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan,referenceFrame,0,0,'SURF');
+                %pause(0.5)
 %                 [FASTcompScore(dirIndex,frameIndex) FASTcompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'FAST');
 %                 [FASTdistortScore(dirIndex,frameIndex) FASTdistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan.intense8Img/brightnessFactor,referenceFrame.intense8Img/brightnessFactor,0,0,'FAST');
 %                 

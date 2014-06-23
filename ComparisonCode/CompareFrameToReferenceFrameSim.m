@@ -14,19 +14,16 @@
 %   /brief  Compares each frame from a particular trial to a frame from a
 %           reference set of image stacks.
 function CompareFrameToReferenceFrameSim()
-
-    
     kFrameTime = 0.5; %2 Hz lidar
     fov = [90 45];
     DEBUG = 0;
     brightnessFactor = 1;
-    
-    
+       
     figOutputPath = '~/Dropbox/Research/Images/Plots/'
     
     %Set root dirs from compensated and uncompensated image stacks
-    compRootDir = '/mnt/data/Datasets/Features/sim/compensated-data/'
-    distortedRootDir = '/mnt/data/Datasets/Features/sim/distorted-data/';
+    compRootDir = '/mnt/data/Datasets/Features/sim/moon/compensated-data/'
+    distortedRootDir = '/mnt/data/Datasets/Features/sim/moon/distorted-data/';
     
     %Set dirs from which to load imagestack   
     compDir = [compRootDir ''];
@@ -92,8 +89,10 @@ function CompareFrameToReferenceFrameSim()
                 %Run comparison for different detectors with the same
                 %descriptor (SURF)
                 [SURFcompNormMatchingScore(dirIndex,frameIndex) SURFcompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan,referenceFrame,0,0,'SURF');
+                %pause(3);
                 [SURFdistortedNormMatchingScore(dirIndex,frameIndex) SURFdistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan,referenceFrame,0,0,'SURF');
-%                 
+                %pause(3);
+                
 %                 [FASTcompNormMatchingScore(dirIndex,frameIndex),FASTcompTrackLength(dirIndex,frameIndex)]  = CompareImagesByDescriptor(compensatedScan,referenceFrame,0,0,'FAST');
 %                 [FASTdistortedNormMatchingScore(dirIndex,frameIndex), FASTdistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan,referenceFrame,0,0,'FAST');
 %                 
@@ -105,29 +104,14 @@ function CompareFrameToReferenceFrameSim()
 %                 
 %                 [MSERCompNormMatchingScore(dirIndex,frameIndex),MSERCompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan,referenceFrame,0,0,'MSER');
 %                 [MSERDistortedNormMatchingScore(dirIndex,frameIndex), MSERDistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan,referenceFrame,0,0,'MSER');
-
-
-                compSumSURF    = compSumSURF + SURFcompNormMatchingScore(dirIndex,frameIndex);
-                distortSumSURF = distortSumSURF + SURFdistortedNormMatchingScore(dirIndex,frameIndex); 
-% 
-%                 compSumFAST    = compSumFAST + FASTcompNormMatchingScore(dirIndex,frameIndex);
-%                 distortSumFAST = distortSumFAST + FASTdistortedNormMatchingScore(dirIndex,frameIndex); 
-%                 
-%                 compSumHarris    = compSumHarris + HarrisCompNormMatchingScore(dirIndex,frameIndex);
-%                 distortSumHarris = distortSumHarris + HarrisDistortedNormMatchingScore(dirIndex,frameIndex); 
-%                 
-% %                 compSumHarrAff    = compSumHarrAff + HarrAffCompNormMatchingScore(dirIndex,frameIndex);
-% %                 distortSumHarrAff = distortSumHarrAff + HarrAffDistortedNormMatchingScore(dirIndex,frameIndex); 
-%                 
-%                 compSumMSER    = compSumMSER + MSERCompNormMatchingScore(dirIndex,frameIndex);
-%                 distortSumMSER = distortSumMSER + MSERDistortedNormMatchingScore(dirIndex,frameIndex); 
-%                 
+                
             end
-        end
-        compScoreSURF(dirIndex) = compSumSURF / size(compedImageStacks,1);
-        compStdSURF(dirIndex) = std(SURFcompNormMatchingScore(dirIndex,SURFcompNormMatchingScore(dirIndex,:)>0))
-        uncompScoreSURF(dirIndex) = distortSumSURF / size(compedImageStacks,1);
-        uncompStdSURF(dirIndex) = std(SURFdistortedNormMatchingScore(dirIndex,SURFdistortedNormMatchingScore(dirIndex,:)>0))
+        end        
+        
+        compScoreSURF(dirIndex) = mean(SURFcompNormMatchingScore(dirIndex,SURFcompNormMatchingScore(dirIndex,:) > 0));
+        compStdSURF(dirIndex) = std(SURFcompNormMatchingScore(dirIndex,SURFcompNormMatchingScore(dirIndex,:)>0));
+        uncompScoreSURF(dirIndex) = mean(SURFdistortedNormMatchingScore(dirIndex,SURFdistortedNormMatchingScore(dirIndex,:) > 0));
+        uncompStdSURF(dirIndex) = std(SURFdistortedNormMatchingScore(dirIndex,SURFdistortedNormMatchingScore(dirIndex,:)>0));
         
 %         compScoreFAST(dirIndex) = compSumFAST/ size(compedImageStacks,1);
 %         compStdFAST(dirIndex) = std(FASTcompNormMatchingScore(dirIndex,FASTcompNormMatchingScore(dirIndex,:)>0))
@@ -139,16 +123,16 @@ function CompareFrameToReferenceFrameSim()
 %         uncompScoreHarris(dirIndex) = distortSumHarris / size(compedImageStacks,1);
 %         uncompStdHarris(dirIndex) = std(HarrisCompNormMatchingScore(dirIndex,HarrisCompNormMatchingScore(dirIndex,:)>0))
 %         
-% %         compScoeHarrAff(dirIndex) = compSumHarrAff / size(compedImageStacks,1);
+% %         compScoreHarrAff(dirIndex) = compSumHarrAff / size(compedImageStacks,1);
 % %         compStdHarrAff(dirIndex) = std(HarrAffCompNormMatchingScore(dirIndex,HarrAffCompNormMatchingScore(dirIndex,:)>0));
 % %         uncompScoreHarrAff(dirIndex) = distortSumHarrAff / size(compedImageStacks,1);
 % %         uncompStdHarrAff(dirIndex) = std(HarrAffDistortedNormMatchingScore(dirIndex,HarrAffDistortedNormMatchingScore(dirIndex,:)>0));
-%          
+% %          
 %         compScoreMSER(dirIndex) = compSumMSER / size(compedImageStacks,1);
 %         compStdMSER(dirIndex) = std(MSERCompNormMatchingScore(dirIndex,MSERCompNormMatchingScore(dirIndex,:)>0));
 %         uncompScoreMSER(dirIndex) = distortSumMSER / size(compedImageStacks,1);
 %         uncompStdMSER(dirIndex) = std(MSERDistortedNormMatchingScore(dirIndex,MSERDistortedNormMatchingScore(dirIndex,:)>0));
- 
+%  
     end
     
     %%%%%%%%%%%%%%%%
@@ -156,7 +140,7 @@ function CompareFrameToReferenceFrameSim()
 %%%%%%%%%%%%%%%%
 
 %%% UNCOMP %%%
-rotVel = [5,10,15,20,25,30,35,40,45,50,55,60,90];
+rotVel = [10,15,20,25,30,35,40,45,50,60,90];
 uncompScoreSURF2 = [uncompScoreSURF(9) uncompScoreSURF(1:8) uncompScoreSURF(10:size(uncompScoreSURF,2))]
 uncompStdSURF2 = [uncompStdSURF(9) uncompStdSURF(1:8) uncompStdSURF(10:size(uncompStdSURF,2))]
 
@@ -201,100 +185,100 @@ errorbar(rotVel,uncompScoreSURF2,compStdSURF2,'r');
 errorbar(rotVel,compScoreSURF2,uncompStdSURF,'b');
 print(h,[figOutputPath 'perf-vs-speed-surf'],'-depsc'); 
 
-h = figure(2); clf; hold on;
-plot(rotVel,compScoreFAST2,'b','LineWidth',2);
-plot(rotVel,uncompScoreFAST2,'r','LineWidth',2);
-legend('Features matching on comp. images','Features matching on uncomp. images');
-plot(rotVel,compScoreFAST2,'xb','LineWidth',2);
-plot(rotVel,uncompScoreFAST2,'xr','LineWidth',2);
-xlabel('Rotational velocity');
-ylabel('Average normalized matching score');  
-title('Performance of FAST vs. rotational velocity')
-errorbar(rotVel,uncompScoreFAST2,uncompStdFAST2,'r');
-errorbar(rotVel,compScoreFAST2,compStdFAST2,'b');
-print(h,[figOutputPath 'perf-vs-speed-fast'],'-depsc'); 
-
-h = figure(3); clf; hold on;
-plot(rotVel,compScoreHarris2,'b','LineWidth',2);
-plot(rotVel,uncompScoreHarris2,'r','LineWidth',2);
-legend('Features matching on comp. images','Features matching on uncomp. images');
-plot(rotVel,compScoreHarris2,'xb','LineWidth',2);
-plot(rotVel,uncompScoreHarris2,'xr','LineWidth',2);
-xlabel('Rotational velocity');
-ylabel('Average normalized matching score');
-title('Performance of Harris Corners vs. rotational velocity')
-errorbar(rotVel,uncompScoreHarris2,uncompStdHarris2,'r');
-errorbar(rotVel,compScoreHarris2,compStdHarris2,'b');
-print(h,[figOutputPath 'perf-vs-speed-harris'],'-depsc'); 
-
-h = figure(4); clf; hold on;
-plot(rotVel,compScoreMSER2,'b','LineWidth',2);
-plot(rotVel,uncompScoreMSER2,'r','LineWidth',2);
-legend('Features matching on comp. images','Features matching on uncomp. images');
-plot(rotVel,compScoreMSER2,'xb','LineWidth',2);
-plot(rotVel,uncompScoreMSER2,'xr','LineWidth',2);
-xlabel('Rotational velocity');
-ylabel('Average normalized matching score');  
-title('Performance of MSER vs. rotational velocity')
-errorbar(rotVel,uncompScoreMSER2,uncompStdMSER2,'r');
-errorbar(rotVel,compScoreMSER2,compStdMSER2,'b');
-print(h,[figOutputPath 'perf-vs-speed-mser'],'-depsc'); 
-
-h = figure(5); clf; hold on;
-plot(rotVel,compScoreHarraff2,'b','LineWidth',2);
-plot(rotVel,uncompScoreHarraff2,'r','LineWidth',2);
-legend('Features matching on comp. images','Features matching on uncomp. images');
-plot(rotVel,compScoreHarraff2,'xb','LineWidth',2);
-plot(rotVel,uncompScoreHarraff2,'xr','LineWidth',2);
-xlabel('Rotational velocity');
-ylabel('Average normalized matching score');  
-title('Performance of Harris-Affine vs. rotational velocity')
-errorbar(rotVel,uncompScoreHarraff2,uncompStdHarraff2,'r');
-errorbar(rotVel,compScoreHarraff2,compStdHarraff2,'b');
-print(h,[figOutputPath 'perf-vs-speed-haraff'],'-depsc'); 
-
+% h = figure(2); clf; hold on;
+% plot(rotVel,compScoreFAST2,'b','LineWidth',2);
+% plot(rotVel,uncompScoreFAST2,'r','LineWidth',2);
+% legend('Features matching on comp. images','Features matching on uncomp. images');
+% plot(rotVel,compScoreFAST2,'xb','LineWidth',2);
+% plot(rotVel,uncompScoreFAST2,'xr','LineWidth',2);
+% xlabel('Rotational velocity');
+% ylabel('Average normalized matching score');  
+% title('Performance of FAST vs. rotational velocity')
+% errorbar(rotVel,uncompScoreFAST2,uncompStdFAST2,'r');
+% errorbar(rotVel,compScoreFAST2,compStdFAST2,'b');
+% print(h,[figOutputPath 'perf-vs-speed-fast'],'-depsc'); 
+% 
+% h = figure(3); clf; hold on;
+% plot(rotVel,compScoreHarris2,'b','LineWidth',2);
+% plot(rotVel,uncompScoreHarris2,'r','LineWidth',2);
+% legend('Features matching on comp. images','Features matching on uncomp. images');
+% plot(rotVel,compScoreHarris2,'xb','LineWidth',2);
+% plot(rotVel,uncompScoreHarris2,'xr','LineWidth',2);
+% xlabel('Rotational velocity');
+% ylabel('Average normalized matching score');
+% title('Performance of Harris Corners vs. rotational velocity')
+% errorbar(rotVel,uncompScoreHarris2,uncompStdHarris2,'r');
+% errorbar(rotVel,compScoreHarris2,compStdHarris2,'b');
+% print(h,[figOutputPath 'perf-vs-speed-harris'],'-depsc'); 
+% 
+% h = figure(4); clf; hold on;
+% plot(rotVel,compScoreMSER2,'b','LineWidth',2);
+% plot(rotVel,uncompScoreMSER2,'r','LineWidth',2);
+% legend('Features matching on comp. images','Features matching on uncomp. images');
+% plot(rotVel,compScoreMSER2,'xb','LineWidth',2);
+% plot(rotVel,uncompScoreMSER2,'xr','LineWidth',2);
+% xlabel('Rotational velocity');
+% ylabel('Average normalized matching score');  
+% title('Performance of MSER vs. rotational velocity')
+% errorbar(rotVel,uncompScoreMSER2,uncompStdMSER2,'r');
+% errorbar(rotVel,compScoreMSER2,compStdMSER2,'b');
+% print(h,[figOutputPath 'perf-vs-speed-mser'],'-depsc'); 
+% 
+% h = figure(5); clf; hold on;
+% plot(rotVel,compScoreHarraff2,'b','LineWidth',2);
+% plot(rotVel,uncompScoreHarraff2,'r','LineWidth',2);
+% legend('Features matching on comp. images','Features matching on uncomp. images');
+% plot(rotVel,compScoreHarraff2,'xb','LineWidth',2);
+% plot(rotVel,uncompScoreHarraff2,'xr','LineWidth',2);
+% xlabel('Rotational velocity');
+% ylabel('Average normalized matching score');  
+% title('Performance of Harris-Affine vs. rotational velocity')
+% errorbar(rotVel,uncompScoreHarraff2,uncompStdHarraff2,'r');
+% errorbar(rotVel,compScoreHarraff2,compStdHarraff2,'b');
+% print(h,[figOutputPath 'perf-vs-speed-haraff'],'-depsc'); 
+% 
 % Uncomp all features
-h = figure(6); clf; hold on;
-plot(rotVel,uncompScoreSURF2,'b','LineWidth',2);
-plot(rotVel,uncompScoreFAST2,'r','LineWidth',2);
-plot(rotVel,uncompScoreHarris2,'g','LineWidth',2);
-plot(rotVel,uncompScoreHarraff2,'k','LineWidth',2);
-plot(rotVel,uncompScoreMSER2,'c','LineWidth',2);
-legend('SURF','FAST','Harris Corners','Harris-Affine','MSER')
-title('Normalized matching score vs. rotational velocity on uncompensated images');
-plot(rotVel,uncompScoreSURF2,'bx','LineWidth',2);
-plot(rotVel,uncompScoreFAST2,'rx','LineWidth',2);
-plot(rotVel,uncompScoreHarris2,'gx','LineWidth',2);
-plot(rotVel,uncompScoreHarraff2,'kx','LineWidth',2);
-plot(rotVel,uncompScoreMSER2,'cx','LineWidth',2);
-errorbar(rotVel,uncompScoreSURF2,compStdSURF2,'b');
-errorbar(rotVel,uncompScoreMSER2,uncompStdMSER2,'c');
-errorbar(rotVel,uncompScoreHarris2,uncompStdHarris2,'g');
-errorbar(rotVel,uncompScoreHarraff2,uncompStdHarraff2,'k');
-errorbar(rotVel,uncompScoreFAST2,uncompStdFAST2,'r');  
-print(h,[figOutputPath 'perf-vs-speed-uncomp'],'-depsc'); 
-
+% h = figure(6); clf; hold on;
+% plot(rotVel,uncompScoreSURF2,'b','LineWidth',2);
+% plot(rotVel,uncompScoreFAST2,'r','LineWidth',2);
+% plot(rotVel,uncompScoreHarris2,'g','LineWidth',2);
+% plot(rotVel,uncompScoreHarraff2,'k','LineWidth',2);
+% plot(rotVel,uncompScoreMSER2,'c','LineWidth',2);
+% legend('SURF','FAST','Harris Corners','Harris-Affine','MSER')
+% title('Normalized matching score vs. rotational velocity on uncompensated images');
+% plot(rotVel,uncompScoreSURF2,'bx','LineWidth',2);
+% plot(rotVel,uncompScoreFAST2,'rx','LineWidth',2);
+% plot(rotVel,uncompScoreHarris2,'gx','LineWidth',2);
+% plot(rotVel,uncompScoreHarraff2,'kx','LineWidth',2);
+% plot(rotVel,uncompScoreMSER2,'cx','LineWidth',2);
+% errorbar(rotVel,uncompScoreSURF2,compStdSURF2,'b');
+% errorbar(rotVel,uncompScoreMSER2,uncompStdMSER2,'c');
+% errorbar(rotVel,uncompScoreHarris2,uncompStdHarris2,'g');
+% errorbar(rotVel,uncompScoreHarraff2,uncompStdHarraff2,'k');
+% errorbar(rotVel,uncompScoreFAST2,uncompStdFAST2,'r');  
+% print(h,[figOutputPath 'perf-vs-speed-uncomp'],'-depsc'); 
+% 
 % comp all features
-h = figure(7); clf; hold on;
-plot(rotVel,compScoreSURF2,'b','LineWidth',2);
-plot(rotVel,compScoreFAST2,'r','LineWidth',2);
-plot(rotVel,compScoreHarris2,'g','LineWidth',2);
-plot(rotVel,compScoreHarraff2,'k','LineWidth',2);
-plot(rotVel,compScoreMSER2,'c','LineWidth',2);
-legend('SURF','FAST','Harris Corners','Harris-Affine','MSER')
-title('Normalized matching score vs. rotational velocity on compensated images');
-plot(rotVel,compScoreSURF2,'bx','LineWidth',2);
-plot(rotVel,compScoreFAST2,'rx','LineWidth',2);
-plot(rotVel,compScoreHarris2,'gx','LineWidth',2);
-plot(rotVel,compScoreHarraff2,'kx','LineWidth',2);
-plot(rotVel,compScoreMSER2,'cx','LineWidth',2);
-errorbar(rotVel,compScoreMSER2,compStdMSER2,'c');
-errorbar(rotVel,compScoreHarris2,compStdHarris2,'g');
-errorbar(rotVel,compScoreHarraff2,compStdHarraff2,'k');
-errorbar(rotVel,compScoreFAST2,compStdFAST2,'r');
-errorbar(rotVel,compScoreSURF2,uncompStdSURF,'b');
-print(h,[figOutputPath 'perf-vs-speed-comp'],'-depsc');   
-
+% h = figure(7); clf; hold on;
+% plot(rotVel,compScoreSURF2,'b','LineWidth',2);
+% plot(rotVel,compScoreFAST2,'r','LineWidth',2);
+% plot(rotVel,compScoreHarris2,'g','LineWidth',2);
+% plot(rotVel,compScoreHarraff2,'k','LineWidth',2);
+% plot(rotVel,compScoreMSER2,'c','LineWidth',2);
+% legend('SURF','FAST','Harris Corners','Harris-Affine','MSER')
+% title('Normalized matching score vs. rotational velocity on compensated images');
+% plot(rotVel,compScoreSURF2,'bx','LineWidth',2);
+% plot(rotVel,compScoreFAST2,'rx','LineWidth',2);
+% plot(rotVel,compScoreHarris2,'gx','LineWidth',2);
+% plot(rotVel,compScoreHarraff2,'kx','LineWidth',2);
+% plot(rotVel,compScoreMSER2,'cx','LineWidth',2);
+% errorbar(rotVel,compScoreMSER2,compStdMSER2,'c');
+% errorbar(rotVel,compScoreHarris2,compStdHarris2,'g');
+% errorbar(rotVel,compScoreHarraff2,compStdHarraff2,'k');
+% errorbar(rotVel,compScoreFAST2,compStdFAST2,'r');
+% errorbar(rotVel,compScoreSURF2,uncompStdSURF,'b');
+% print(h,[figOutputPath 'perf-vs-speed-comp'],'-depsc');   
+% 
 end
 
 

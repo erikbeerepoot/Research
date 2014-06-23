@@ -42,7 +42,7 @@ end
 
 function [score,avgTrackLength] = CompareBySURFFeatures(in_im1,in_im2,doPlot,doSave)
     dirIndex = 1;
-    numberOfFeatures = 200;
+    numberOfFeatures = 25;
     
     %Assign default output values
     score = 0;
@@ -205,8 +205,14 @@ function [score,avgTrackLength] = CompareByMSERRegions(in_im1,in_im2,doPlot,doSa
     im1 = adapthisteq(in_im1.intense8Img);
     im2 = adapthisteq(in_im2.intense8Img);
     
-    feat1 = detectMSERFeatures(im1);
-    feat2 = detectMSERFeatures(im2);
+    
+    MSERFeat1 = detectMSERFeatures(im1);
+    MSERFeat2 = detectMSERFeatures(im2);
+    
+    feat1 = SURFPoints;
+    feat1 = feat1.append(MSERFeat1.Location,'Scale',2);
+    feat2 = SURFPoints;
+    feat2 = feat2.append(MSERFeat2.Location,'Scale',2);
     
     RejectMaskedFeatures(feat1,in_im1.maskImg);
     RejectMaskedFeatures(feat2,in_im2.maskImg);
@@ -224,8 +230,8 @@ function [score,avgTrackLength] = CompareByMSERRegions(in_im1,in_im2,doPlot,doSa
 end
 
 function [score,avgTrackLength] = CompareSURFDescriptors(im1,im2,feat1,feat2,doPlot,doSave)
-    kDescThreshold = 0.025;
-    kDistanceThreshold = inf;
+    kDescThreshold = 0.020;
+    kDistanceThreshold = 100;
     
     %Extract features and decide which one to use as query vector
     descs1 = extractFeatures(im1,feat1);
@@ -250,6 +256,8 @@ function [score,avgTrackLength] = CompareSURFDescriptors(im1,im2,feat1,feat2,doP
             magnitude = 0;
             vector = abs([feat1.Location(neighbourIndex,1),feat1.Location(neighbourIndex,2)] - [feat2.Location(featIndex,1),feat2.Location(featIndex,2)]);
             magnitude = sqrt(vector(1)^2 + vector(2)^2);
+            
+            %Reject egregious outliers
             if(magnitude > kDistanceThreshold) 
                 featIndex = featIndex + 1;             
                 continue;
@@ -265,6 +273,8 @@ function [score,avgTrackLength] = CompareSURFDescriptors(im1,im2,feat1,feat2,doP
         end
         featIndex = featIndex + 1;             
     end
+    
+        
     if(doPlot==1)
         hold off;
     end
