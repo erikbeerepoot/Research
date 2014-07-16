@@ -1,0 +1,1 @@
+void DisplayImage(const std::string &imagePath);

@@ -1,0 +1,1 @@
+void CompareImagesByDescriptor(std::string img1Path, std::string img2Path, bool doPlot, bool doSave, std::string descriptorName, double *score, double *trackLength);
