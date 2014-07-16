@@ -42,15 +42,18 @@ end
 
 function [score,avgTrackLength] = CompareBySURFFeatures(in_im1,in_im2,doPlot,doSave)
     dirIndex = 1;
-    numberOfFeatures = 25;
+    numberOfFeatures = 50;
     
     %Assign default output values
     score = 0;
     avgTrackLength = 0;
         
     %Run AHE
-    im1 = adapthisteq(in_im1.intense8Img);
-    im2 = adapthisteq(in_im2.intense8Img);
+    %im1 = adapthisteq(in_im1.intense8Img);
+    %im2 = adapthisteq(in_im2.intense8Img);
+
+    im1 = in_im1.intense8Img;
+    im2 = in_im2.intense8Img;
     
     surfKp = detectSURFFeatures(im1);
     surfKp2 = detectSURFFeatures(im2);
@@ -230,8 +233,8 @@ function [score,avgTrackLength] = CompareByMSERRegions(in_im1,in_im2,doPlot,doSa
 end
 
 function [score,avgTrackLength] = CompareSURFDescriptors(im1,im2,feat1,feat2,doPlot,doSave)
-    kDescThreshold = 0.020;
-    kDistanceThreshold = 100;
+    kDescThreshold = 0.030;
+    kDistanceThreshold = 200;
     
     %Extract features and decide which one to use as query vector
     descs1 = extractFeatures(im1,feat1);
