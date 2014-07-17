@@ -12,6 +12,11 @@
 
 
 void CompareImagesBySurfFeatures(cv::Mat img1, cv::Mat img2,bool doAHE, bool doPlot, bool doSave, double &score, double &avgTrackLength);
+void CompareImagesByMSERFeatures(cv::Mat img1, cv::Mat img2,bool doAHE, bool doPlot, bool doSave, double &score, double &avgTrackLength);
+void CompareImagesByHarrisAffineFeatures(cv::Mat img1, cv::Mat img2,bool doAHE, bool doPlot, bool doSave, double &score, double &avgTrackLength);
+void CompareImagesByHarrisFeatures(cv::Mat img1, cv::Mat img2,bool doAHE, bool doPlot, bool doSave, double &score, double &avgTrackLength);
+void CompareImagesByFASTFeatures(cv::Mat img1, cv::Mat img2,bool doAHE, bool doPlot, bool doSave, double &score, double &avgTrackLength);
+
 void CompareSURFDescriptors(cv::Mat img1, cv::Mat img2, std::vector<cv::KeyPoint> keypoints1,std::vector<cv::KeyPoint> keypoints2, bool doPlot, bool doSave, double &matchingScore, double &avgTrackLength);
 
  int main(int argc, char **argv){
@@ -19,26 +24,27 @@ void CompareSURFDescriptors(cv::Mat img1, cv::Mat img2, std::vector<cv::KeyPoint
 //	std::string imagePath = "/Users/erikbeerepoot/Datasets/Features/sim/moon/compensated-data/10-deg-s/1.0/0001/0001.asa.comp.png";
 //	std::string imagePath2 = "/Users/erikbeerepoot/Datasets/Features/sim/moon/compensated-data/10-deg-s/1.0/0001/0003.asa.comp.png";
 
- 	if(argc < 3){
- 		std::cout << "Usage: FeatureMatches [/path/to/img1] [/path/to/img2]" << std::endl;
+ 	if(argc < 4){
+ 		std::cout << "Usage: FeatureMatches [/path/to/img1] [/path/to/img2] [featureDetector]" << std::endl;
  		return 1;
  	}
 
  	const std::string imagePath(argv[1]);
  	const std::string imagePath2(argv[2]);
+ 	const std::string featureDetector(argv[3]);
 
 	cv::Mat compensatedImage = cv::imread(imagePath,CV_LOAD_IMAGE_GRAYSCALE);
 	cv::Mat compensatedImage2 = cv::imread(imagePath2,CV_LOAD_IMAGE_GRAYSCALE);
 
-	if(compensatedImage.empty()) {
-		std::cout << "Image empty!" << std::endl;
+	if(compensatedImage.empty() || compensatedImage2.empty()) {
+		std::cout << "One or more image is empty!" << std::endl;
 		return 1;
 	}
 	
 	//Compare images
 	double score=0,avgTrackLength=0;
 	//CompareImagesBySurfFeatures(compensatedImage,compensatedImage2,true,true,false,score,avgTrackLength);
-	CompareImagesByDescriptor(imagePath, imagePath2, false, false, "SURF",&score, &avgTrackLength);
+	CompareImagesByDescriptor(imagePath, imagePath2, false, false, featureDetector,&score, &avgTrackLength);
 	
 	#ifdef DEBUG
 		std::cout << "Matching score: " << score << std::endl;
@@ -46,7 +52,6 @@ void CompareSURFDescriptors(cv::Mat img1, cv::Mat img2, std::vector<cv::KeyPoint
 	#else
 		printf("%f,%f,\n",score,avgTrackLength);
 	#endif
-
 	return 0;
  }
 
@@ -59,15 +64,19 @@ void CompareImagesByDescriptor(std::string img1Path, std::string img2Path, bool 
 		return;
 	}
 
-	if(descriptorName.compare("SURF")==0){
+	if(descriptorName.compare("SURF")==0){		
 		CompareImagesBySurfFeatures(img1,img2,true,doPlot,doSave,*score,*trackLength);
-	} else if(descriptorName.compare("FAST")==0){
+	} else if(descriptorName.compare("FAST")==0){	
+		CompareImagesByFASTFeatures(img1,img2,true,doPlot,doSave,*score,*trackLength);
 		return;
 	} else if(descriptorName.compare("Harris")==0){
+		CompareImagesByHarrisFeatures(img1,img2,true,doPlot,doSave,*score,*trackLength);	
 		return;
 	} else if(descriptorName.compare("HarrisAffine")==0){
+		std::cout << "Not implemented" << std::endl;
 		return;
 	} else if(descriptorName.compare("MSER")==0){
+		CompareImagesByMSERFeatures(img1,img2,true,doPlot,doSave,*score,*trackLength);
 		return;
 	} else {
 		std::cout << "Could not recognize descriptor type!" << std::endl;
@@ -110,7 +119,128 @@ void CompareImagesBySurfFeatures(cv::Mat img1, cv::Mat img2,bool doAHE, bool doP
 		cv::drawKeypoints(im2,keypoints2,im2withKeypoints,cv::Scalar::all(-1),cv::DrawMatchesFlags::DEFAULT);
 
 		cv::imshow("Image 1",im1withKeypoints);
-		cv::imshow("Image 2",im2withKeypoints);
+		cv::imshow("Image 2",im2withKeypoints);	
+	}
+
+	 CompareSURFDescriptors(im1,im2,keypoints1,keypoints2,true,false,score,avgTrackLength);	
+}
+
+void CompareImagesByFASTFeatures(cv::Mat img1, cv::Mat img2,bool doAHE, bool doPlot, bool doSave, double &score, double &avgTrackLength){
+	//SURF parameters
+	const int minHessian = 400;
+
+	//function variables
+	std::vector<cv::KeyPoint> keypoints1,keypoints2;
+
+	//assign default values for output variables
+	score = 0.0;
+	avgTrackLength = 0.0;
+
+	cv::Mat im1,im2;
+
+	//apply adaptive histogram equalization
+	if(doAHE){
+		cv::equalizeHist(img1,im1);
+		cv::equalizeHist(img2,im2);
+	} else {
+		im1 = img1;
+		im2 = img2;
+	}
+
+	//detect surf features
+	cv::FastFeatureDetector detector;
+	detector.detect(im1,keypoints1);
+	detector.detect(im2,keypoints2);
+
+	if(doPlot){
+		cv::Mat im1withKeypoints,im2withKeypoints;
+
+		//draw kp and plot
+		cv::drawKeypoints(im1,keypoints1,im1withKeypoints,cv::Scalar::all(-1),cv::DrawMatchesFlags::DEFAULT);
+		cv::drawKeypoints(im2,keypoints2,im2withKeypoints,cv::Scalar::all(-1),cv::DrawMatchesFlags::DEFAULT);
+
+		cv::imshow("Image 1",im1withKeypoints);
+		cv::imshow("Image 2",im2withKeypoints);	
+	}
+
+	 CompareSURFDescriptors(im1,im2,keypoints1,keypoints2,true,false,score,avgTrackLength);	
+}
+void CompareImagesByHarrisFeatures(cv::Mat img1, cv::Mat img2,bool doAHE, bool doPlot, bool doSave, double &score, double &avgTrackLength){
+	//SURF parameters
+	const int maxCorners = 500;
+	const double qualityLevel = 1.0;
+	const double minDistance = 1.0;
+
+	//function variables
+	std::vector<cv::KeyPoint> keypoints1,keypoints2;
+
+	//assign default values for output variables
+	score = 0.0;
+	avgTrackLength = 0.0;
+
+	cv::Mat im1,im2;
+
+	//apply adaptive histogram equalization
+	if(doAHE){
+		cv::equalizeHist(img1,im1);
+		cv::equalizeHist(img2,im2);
+	} else {
+		im1 = img1;
+		im2 = img2;
+	}
+
+	//detect surf features
+	cv::GoodFeaturesToTrackDetector detector(maxCorners,qualityLevel,minDistance,3,true,0.04);
+	detector.detect(im1,keypoints1);
+	detector.detect(im2,keypoints2);
+
+	if(doPlot){
+		cv::Mat im1withKeypoints,im2withKeypoints;
+
+		//draw kp and plot
+		cv::drawKeypoints(im1,keypoints1,im1withKeypoints,cv::Scalar::all(-1),cv::DrawMatchesFlags::DEFAULT);
+		cv::drawKeypoints(im2,keypoints2,im2withKeypoints,cv::Scalar::all(-1),cv::DrawMatchesFlags::DEFAULT);
+
+		cv::imshow("Image 1",im1withKeypoints);
+		cv::imshow("Image 2",im2withKeypoints);	
+	}
+
+	 CompareSURFDescriptors(im1,im2,keypoints1,keypoints2,true,false,score,avgTrackLength);	
+}
+
+void CompareImagesByMSERFeatures(cv::Mat img1, cv::Mat img2,bool doAHE, bool doPlot, bool doSave, double &score, double &avgTrackLength){
+	//function variables
+	std::vector<cv::KeyPoint> keypoints1,keypoints2;
+
+	//assign default values for output variables
+	score = 0.0;
+	avgTrackLength = 0.0;
+
+	cv::Mat im1,im2;
+
+	//apply adaptive histogram equalization
+	if(doAHE){
+		cv::equalizeHist(img1,im1);
+		cv::equalizeHist(img2,im2);
+	} else {
+		im1 = img1;
+		im2 = img2;
+	}
+
+	//detect surf features
+	cv::MSER detector;
+	detector.detect(im1,keypoints1);
+	detector.detect(im2,keypoints2);
+
+	if(doPlot){
+		cv::Mat im1withKeypoints,im2withKeypoints;
+
+		//draw kp and plot
+		cv::drawKeypoints(im1,keypoints1,im1withKeypoints,cv::Scalar::all(-1),cv::DrawMatchesFlags::DEFAULT);
+		cv::drawKeypoints(im2,keypoints2,im2withKeypoints,cv::Scalar::all(-1),cv::DrawMatchesFlags::DEFAULT);
+
+		cv::imshow("Image 1",im1withKeypoints);
+		cv::imshow("Image 2",im2withKeypoints);	
 	}
 
 	 CompareSURFDescriptors(im1,im2,keypoints1,keypoints2,true,false,score,avgTrackLength);	
