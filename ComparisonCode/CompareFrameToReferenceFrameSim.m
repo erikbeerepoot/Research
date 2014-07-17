@@ -22,8 +22,8 @@ function CompareFrameToReferenceFrameSim()
     figOutputPath = '~/Dropbox/Research/Images/Plots/'
     
     %Set root dirs from compensated and uncompensated image stacks
-    compRootDir = '/run/media/erik/data/Datasets/Features/sim/mars/compensated-data/'
-    distortedRootDir = '/run/media/erik/data/Datasets/Features/sim/mars/distorted-data/';
+    compRootDir = '/Users/erikbeerepoot/Datasets/Features/sim/mars/compensated-data/';
+    distortedRootDir = '/Users/erikbeerepoot/Datasets/Features/sim/mars/distorted-data/';
     
     %Set dirs from which to load imagestack   
     compDir = [compRootDir ''];
@@ -37,17 +37,17 @@ function CompareFrameToReferenceFrameSim()
     %Load reference image stack directory listing
     files = dir([referenceDir '*.asa']);
     for i = 1 : size(files,1)
-        referenceImageStacks(i).name = [num2str(i) '.asa'];
+        referenceImages(i).name = [num2str(i) '.png'];
     end
     
     %Loop over each directory and process file
     for dirIndex = 1 : size(distortedDirs,1)
-        distortedFilePath = distortedDirs (dirIndex);
+        distortedFilePath = distortedDirs(dirIndex);
         compFilePath = compDirs(dirIndex);
         
         %Get image stacks in dir
-        distortedImageStacks = dir([distortedDir distortedFilePath.name '/0001/*.asa']);
-        compedImageStacks = dir([compDir compFilePath.name '/1.0/0001/*.asa']);
+        distortedImages = dir([distortedDir distortedFilePath.name '/0001/*.png']);
+        compedImages = dir([compDir compFilePath.name '/1.0/0001/*.png']);
                 
         %Get speed from the filename
         speed = str2num(cell2mat(regexp(distortedFilePath.name,'^\d+','match')))
@@ -60,36 +60,50 @@ function CompareFrameToReferenceFrameSim()
         
         compSum = 0;
         distortSum = 0;
-        if(size(compedImageStacks,1)>0)
-            for frameIndex = 1 : min([size(distortedImageStacks,1),size(compedImageStacks,1)]) - 3
-                %Load files to compare
-                compensatedScan = loadAsrlMatArchive([compDir compFilePath.name '/1.0/0001/' compedImageStacks(frameIndex).name]);                
-                distortedScan  = loadAsrlMatArchive([distortedDir distortedFilePath.name '/0001/' distortedImageStacks(frameIndex).name]);
-                
-                %Compute 
+        if(size(compedImages,1)>0)
+            for frameIndex = 1 : min([size(distortedImages,1),size(compedImages,1)]) - 3
+                %Compute reference index
                 refIdx = round(mod(speed * kFrameTime * frameIndex,359));
                 
-                %Get reference image
-                try
-                    referenceFrame = loadAsrlMatArchive([referenceDir referenceImageStacks(refIdx).name]);
-                catch
-                    disp('error!')
-                end
-                close all;
+                %Create file paths
+                distortFramePath    = [distortedDir distortedFilePath.name '/0001/' distortedImages(frameIndex).name] 
+                compFramePath       = [compDir compFilePath.name '/1.0/0001/' compedImages(frameIndex).name]               
+                referenceFramePath  = [referenceDir referenceImages(refIdx).name]
+               
+                %compensatedScan = imread([compDir compFilePath.name '/1.0/0001/' compFileName '.png']);                
+                %distortedScan  = imread([distortedDir distortedFilePath.name '/0001/' distortFileName '.png']);
                 
+                %Compute 
+                
+               
                 %Run comparison for different detectors with the same
                 %descriptor (SURF)
-                [SURFcompNormMatchingScore(dirIndex,frameIndex), SURFcompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan,referenceFrame,0,0,'SURF');
-                pause(2);
-                [SURFdistortedNormMatchingScore(dirIndex,frameIndex), SURFdistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan,referenceFrame,0,0,'SURF');                
-                pause(2);
+                [result,output] = system(['./c++/FeatureMatches ' compFramePath ' ' referenceFramePath]);
+                if(result==0)
+                  tmp = regexp(output,'([^ ,:]*)','tokens');
+                  SURFcompNormMatchingScore(dirIndex,frameIndex)   = str2double(tmp(1));
+                  SURFcompTrackLength(dirIndex,frameIndex) = str2double(tmp(2));
+                end
+                
+                [result,output] = system(['./c++/FeatureMatches ' distortFramePath ' ' referenceFramePath]);
+                if(result==0)
+                  tmp = regexp(output,'([^ ,:]*)','tokens');
+                  SURFdistortedNormMatchingScore(dirIndex,frameIndex)   = str2double(tmp(1));
+                  SURFdistortedNormMatchingScore(dirIndex,frameIndex) = str2double(tmp(2));
+                end
+                
+                
+                %[SURFcompNormMatchingScore(dirIndex,frameIndex), SURFcompTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(compensatedScan,referenceFrame,0,0,'SURF');
+                %pause(2);
+                %[SURFdistortedNormMatchingScore(dirIndex,frameIndex), SURFdistortTrackLength(dirIndex,frameIndex)] = CompareImagesByDescriptor(distortedScan,referenceFrame,0,0,'SURF');                
+                %pause(2);
             end
         end        
         
-        meanCompScoreSURF(dirIndex) = mean(SURFcompNormMatchingScore(dirIndex,SURFcompNormMatchingScore(dirIndex,:) > 0));
-        stdCompSURF(dirIndex) = std(SURFcompNormMatchingScore(dirIndex,SURFcompNormMatchingScore(dirIndex,:)>0));
-        meanUncompScoreSURF(dirIndex) = mean(SURFdistortedNormMatchingScore(dirIndex,SURFdistortedNormMatchingScore(dirIndex,:) > 0));
-        stdUncompSURF(dirIndex) = std(SURFdistortedNormMatchingScore(dirIndex,SURFdistortedNormMatchingScore(dirIndex,:)>0));
+%         meanCompScoreSURF(dirIndex) = mean(SURFcompNormMatchingScore(dirIndex,SURFcompNormMatchingScore(dirIndex,:) > 0));
+%         stdCompSURF(dirIndex) = std(SURFcompNormMatchingScore(dirIndex,SURFcompNormMatchingScore(dirIndex,:)>0));
+%         meanUncompScoreSURF(dirIndex) = mean(SURFdistortedNormMatchingScore(dirIndex,SURFdistortedNormMatchingScore(dirIndex,:) > 0));
+%         stdUncompSURF(dirIndex) = std(SURFdistortedNormMatchingScore(dirIndex,SURFdistortedNormMatchingScore(dirIndex,:)>0));
     end
     
     %%%%%%%%%%%%%%%%

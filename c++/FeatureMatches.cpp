@@ -44,7 +44,7 @@ void CompareSURFDescriptors(cv::Mat img1, cv::Mat img2, std::vector<cv::KeyPoint
 		std::cout << "Matching score: " << score << std::endl;
 		std::cout << "avgTrackLength: " << avgTrackLength << std::endl;
 	#else
-		printf("%f,%f\n",score,avgTrackLength);
+		printf("%f,%f,\n",score,avgTrackLength);
 	#endif
 
 	return 0;
